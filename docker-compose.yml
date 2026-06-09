@@ -1,0 +1,50 @@
+# Initial infrastructure scaffold only.
+# Application code, Dockerfiles, MySQL schema and seed data will be added in later modules.
+
+services:
+  backend:
+    image: node:20-alpine
+    working_dir: /app
+    command: ["sh", "-c", "echo Backend scaffold only. Implementation pending. && tail -f /dev/null"]
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./backend:/app
+      - ./uploads:/app/uploads
+    depends_on:
+      - mysql
+      - mongodb
+
+  frontend:
+    image: node:20-alpine
+    working_dir: /app
+    command: ["sh", "-c", "echo Frontend scaffold only. Implementation pending. && tail -f /dev/null"]
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+    depends_on:
+      - backend
+
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: vending_machine
+      MYSQL_USER: vending_user
+      MYSQL_PASSWORD: vending_pass
+      MYSQL_ROOT_PASSWORD: root_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+  mongodb:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+volumes:
+  mysql_data:
+  mongo_data:
