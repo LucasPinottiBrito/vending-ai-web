@@ -1,0 +1,30 @@
+{
+  "timestamp": "2026-01-01T12:02:00.000Z",
+  "event_type": "UPDATE",
+  "action": "PUT /api/admin/products/1",
+  "user_id": 1,
+  "username": "admin",
+  "method": "PUT",
+  "endpoint": "/api/admin/products/1",
+  "status_code": 200,
+  "response_time_ms": 68,
+  "ip": "127.0.0.1",
+  "user_agent": "Mozilla/5.0",
+  "table": "products",
+  "record_id": "1",
+  "before": {
+    "name": "Agua Mineral 500ml",
+    "price_cents": 500
+  },
+  "after": {
+    "name": "Agua Mineral 500ml",
+    "price_cents": 550
+  },
+  "details": {
+    "changed_fields": [
+      "price_cents"
+    ]
+  },
+  "error": null,
+  "stack_trace": null
+}

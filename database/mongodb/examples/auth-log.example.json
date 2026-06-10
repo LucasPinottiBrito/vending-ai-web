@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-01-01T12:01:00.000Z",
+  "event_type": "LOGIN_SUCCESS",
+  "action": "POST /api/auth/login",
+  "user_id": 1,
+  "username": "admin",
+  "method": "POST",
+  "endpoint": "/api/auth/login",
+  "status_code": 200,
+  "response_time_ms": 52,
+  "ip": "127.0.0.1",
+  "user_agent": "Mozilla/5.0",
+  "table": null,
+  "record_id": null,
+  "before": null,
+  "after": null,
+  "details": {
+    "auth_provider": "local",
+    "role": "ADMIN"
+  },
+  "error": null,
+  "stack_trace": null
+}

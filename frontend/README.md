@@ -1,36 +1,140 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Frontend - Vending AI Web Platform
 
-## Getting Started
+Aplicacao Next.js/React da plataforma web da vending machine. O frontend consome somente o backend Express configurado em `NEXT_PUBLIC_API_URL`; nao acessa MySQL nem MongoDB diretamente.
 
-First, run the development server:
+## Stack
+
+- Next.js 16 com App Router.
+- React 19.
+- TypeScript.
+- TailwindCSS v4.
+- shadcn/ui com Radix UI.
+- React Hook Form + Zod.
+- Sonner para toast.
+- Chart.js via `react-chartjs-2`.
+- jsPDF para geracao de relatorios PDF no navegador.
+
+## Variaveis
+
+Copie o exemplo se quiser customizar o ambiente local:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Valores esperados:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```env
+NEXT_PUBLIC_API_URL=http://localhost:4000
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_WHATSAPP_SUPPORT_URL=https://wa.me/55XXXXXXXXXXX
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Scripts
 
-## Learn More
+```bash
+npm install
+npm run dev
+npm run lint
+npm run build
+npm run test:e2e -- tests/auth-frontend.spec.ts --browser=chromium
+npm start
+```
 
-To learn more about Next.js, take a look at the following resources:
+Em desenvolvimento, acesse:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```txt
+http://localhost:3000
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Rotas principais
 
-## Deploy on Vercel
+Publicas e cliente:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- `/`
+- `/login`
+- `/register`
+- `/m/[slug]`
+- `/m/[slug]/product/[productId]`
+- `/m/[slug]/checkout/[slotId]`
+- `/machine/[slug]` redireciona para `/m/[slug]`
+- `/purchase/[id]`
+- `/account`
+- `/account/wallet`
+- `/account/purchases`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Administrativas:
+
+- `/admin`
+- `/admin/machines`
+- `/admin/products`
+- `/admin/inventory`
+- `/admin/sales`
+- `/admin/import-export`
+- `/admin/reports`
+- `/admin/charts`
+- `/admin/logs`
+
+Rotas administrativas criadas com aviso de endpoint pendente:
+
+- `/admin/users`
+- `/admin/payments`
+- `/admin/events`
+
+## Integracao com backend
+
+O client central fica em `lib/api.ts` e padroniza:
+
+- `NEXT_PUBLIC_API_URL`;
+- headers `Authorization: Bearer <token>`;
+- parse do envelope `{ success, message, data, error }`;
+- `ApiClientError`;
+- upload multipart;
+- download de JSON/XML;
+- helper para baixar `Blob`.
+
+Sessao JWT fica em `lib/auth.ts` usando `localStorage`, porque o backend retorna token Bearer e nao cookie httpOnly nesta fase academica. O token nao e exibido em tela, nao e registrado em logs do frontend e e enviado automaticamente pelo `apiRequest` nas chamadas autenticadas.
+
+## Autenticacao frontend
+
+Rotas implementadas:
+
+- `/login`: formulario com React Hook Form + Zod, consumo de `POST /api/auth/login`, feedback por Sonner e mensagem inline sem stack trace.
+- `/register`: formulario com React Hook Form + Zod, consumo de `POST /api/auth/register`, armazenamento da sessao retornada e redirecionamento para `/account`.
+- `/account`: rota privada protegida por `RouteGuard`.
+
+Componentes e bibliotecas principais:
+
+- `components/forms/AuthForms.tsx`: telas de login e registro.
+- `lib/auth.ts`: armazenamento, leitura, atualizacao e logout da sessao JWT.
+- `hooks/useAuth.ts`: hook de sessao com sincronizacao entre header, guards e paginas.
+- `components/layout/RouteGuard.tsx`: protecao de rotas privadas e admin.
+- `lib/api.ts`: injeta `Authorization: Bearer <token>` automaticamente quando ha sessao armazenada.
+
+Logout chama `POST /api/auth/logout` quando existe token local e sempre limpa a sessao no navegador ao final.
+
+## Validacao manual
+
+1. Suba o backend em `http://localhost:4000`.
+2. Rode `npm run dev`.
+3. Abra `http://localhost:3000`.
+4. Confirme o indicador `API online` vindo de `/health`.
+5. Teste login com os seeds:
+   - `admin@example.com` / `Admin@123`
+   - `cliente@example.com` / `Cliente@123`
+6. Acesse `/m/hall-principal` e confira catalogo vindo do backend.
+7. Acesse `/account/wallet` e teste recarga mockada.
+8. Acesse `/admin` com usuario ADMIN e navegue entre CRUDs, JSON, XML, PDF e Chart.js.
+
+Mais detalhes: `../docs/usage/frontend.md`.
+Fluxo de autenticacao: `../docs/usage/auth-frontend.md`.
+Fluxo do catalogo (QR Code): `../docs/usage/catalog-flow.md`.
+Fluxo da carteira (Recarga): `../docs/usage/wallet-flow.md`.
+Fluxo de checkout e compra: `../docs/usage/checkout-flow.md`.
+Historico de compras: `../docs/usage/purchase-history.md`.
+Painel administrativo: `../docs/usage/admin-panel.md`.
+Gestao de produtos: `../docs/usage/admin-products.md`.
+Gestao de maquinas e inventario: `../docs/usage/admin-machines-inventory.md`.
+Relatorios e graficos: `../docs/usage/reports-and-charts.md`.
+Importacao e exportacao JSON: `../docs/usage/import-export-json.md`.
+Auditoria e logs XML: `../docs/usage/admin-logs.md`.

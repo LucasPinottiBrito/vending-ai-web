@@ -1,0 +1,13 @@
+{
+  "entity": "inventory",
+  "records": [
+    {
+      "machine_id": 1,
+      "slot_id": 5,
+      "product_id": 1,
+      "quantity_available": 10,
+      "quantity_reserved": 0,
+      "min_quantity_alert": 3
+    }
+  ]
+}

@@ -1,37 +1,98 @@
 import Link from "next/link";
-import { ArrowRight, QrCode } from "lucide-react";
+import { ArrowRight, LayoutDashboard, QrCode, Wallet } from "lucide-react";
+
+import { BackendStatus } from "@/components/layout/BackendStatus";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-brand-surface">
-      <div className="w-full max-w-sm space-y-8 text-center">
-        <div className="mx-auto w-20 h-20 bg-brand-primary rounded-3xl flex items-center justify-center shadow-lg shadow-brand-primary/20">
-          <QrCode className="w-10 h-10 text-white" />
-        </div>
-        
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">
-            Vending AI
-          </h1>
-          <p className="text-brand-muted">
-            Escaneie o QR Code na máquina para começar sua compra.
-          </p>
+    <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-8 px-4 py-10">
+      <section className="grid gap-6 md:grid-cols-[1.2fr_0.8fr] md:items-center">
+        <div className="flex flex-col gap-5">
+          <BackendStatus />
+          <div className="flex flex-col gap-3">
+            <h1 className="max-w-2xl text-4xl font-semibold tracking-tight md:text-5xl">
+              Vending AI Web Platform
+            </h1>
+            <p className="max-w-2xl text-base text-muted-foreground">
+              Frontend Next.js conectado exclusivamente ao backend Express para
+              catalogo, carteira, compras, administracao, relatorios e logs.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button asChild size="lg">
+              <Link href="/m/hall-principal">
+                <QrCode data-icon="inline-start" />
+                Acessar maquina demo
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg">
+              <Link href="/admin">
+                <LayoutDashboard data-icon="inline-start" />
+                Administracao
+              </Link>
+            </Button>
+          </div>
         </div>
 
-        <div className="pt-4">
-          <Link
-            href="/m/hall-principal"
-            className="inline-flex items-center justify-center w-full gap-2 px-6 py-4 text-sm font-bold text-white transition-all rounded-2xl bg-brand-primary hover:bg-brand-primary/90 active:scale-95 shadow-md shadow-brand-primary/10"
-          >
-            Acessar Máquina de Teste
-            <ArrowRight className="w-4 h-4" />
-          </Link>
-        </div>
-        
-        <p className="text-[10px] font-bold uppercase tracking-widest text-brand-muted/40 pt-12">
-          Vending AI Web • Academic Project
-        </p>
-      </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Fluxo de compra</CardTitle>
+            <CardDescription>
+              O backend valida preco, saldo, estoque e autorizacao.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-3">
+            {["Escanear QR Code", "Entrar ou cadastrar", "Comprar com carteira"].map(
+              (step, index) => (
+                <div key={step} className="flex items-center gap-3 rounded-lg border p-3">
+                  <span className="flex size-7 items-center justify-center rounded-full bg-primary text-sm text-primary-foreground">
+                    {index + 1}
+                  </span>
+                  <span className="text-sm font-medium">{step}</span>
+                </div>
+              ),
+            )}
+          </CardContent>
+        </Card>
+      </section>
+
+      <section className="grid gap-4 md:grid-cols-3">
+        <Card>
+          <CardHeader>
+            <QrCode />
+            <CardTitle>Catalogo por maquina</CardTitle>
+            <CardDescription>
+              Produtos e disponibilidade carregados pelo endpoint de catalogo.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader>
+            <Wallet />
+            <CardTitle>Carteira interna</CardTitle>
+            <CardDescription>
+              Saldo e recarga mockada usando endpoints do backend.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+        <Card>
+          <CardHeader>
+            <ArrowRight />
+            <CardTitle>Administracao</CardTitle>
+            <CardDescription>
+              CRUDs, JSON, XML, PDF e Chart.js em uma base navegavel.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </section>
     </main>
   );
 }

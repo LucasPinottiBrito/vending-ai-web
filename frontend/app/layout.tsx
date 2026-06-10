@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+
+import { AppHeader } from "@/components/layout/AppHeader";
+import { ThemeProvider } from "@/components/layout/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,8 +17,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Vending AI | Compre com facilidade",
-  description: "Plataforma web para máquinas de venda automática IoT.",
+  title: "Vending AI Web Platform",
+  description: "Plataforma web full stack para vending machine IoT.",
 };
 
 export default function RootLayout({
@@ -24,10 +28,19 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="pt-BR"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full bg-background text-foreground">
+        <ThemeProvider>
+          <div className="flex min-h-screen flex-col">
+            <AppHeader />
+            {children}
+          </div>
+          <Toaster richColors position="top-right" />
+        </ThemeProvider>
+      </body>
     </html>
   );
 }

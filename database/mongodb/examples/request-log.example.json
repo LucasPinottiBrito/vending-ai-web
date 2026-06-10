@@ -1,0 +1,24 @@
+{
+  "timestamp": "2026-01-01T12:00:00.000Z",
+  "event_type": "REQUEST_ACCESS",
+  "action": "GET /api/products",
+  "user_id": 1,
+  "username": "admin",
+  "method": "GET",
+  "endpoint": "/api/products",
+  "status_code": 200,
+  "response_time_ms": 35,
+  "ip": "127.0.0.1",
+  "user_agent": "Mozilla/5.0",
+  "table": null,
+  "record_id": null,
+  "before": null,
+  "after": null,
+  "details": {
+    "query": {
+      "search": "agua"
+    }
+  },
+  "error": null,
+  "stack_trace": null
+}

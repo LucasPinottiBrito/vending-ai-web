@@ -1,0 +1,25 @@
+{
+  "timestamp": "2026-01-01T12:03:00.000Z",
+  "event_type": "EXCEPTION",
+  "action": "POST /api/sales/checkout",
+  "user_id": 2,
+  "username": "cliente",
+  "method": "POST",
+  "endpoint": "/api/sales/checkout",
+  "status_code": 500,
+  "response_time_ms": 91,
+  "ip": "127.0.0.1",
+  "user_agent": "Mozilla/5.0",
+  "table": null,
+  "record_id": null,
+  "before": null,
+  "after": null,
+  "details": {
+    "request_id": "req-demo-001"
+  },
+  "error": {
+    "name": "InternalServerError",
+    "message": "Unexpected checkout failure"
+  },
+  "stack_trace": "InternalServerError: Unexpected checkout failure at SaleService.checkout"
+}

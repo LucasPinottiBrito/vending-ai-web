@@ -1,0 +1,23 @@
+{
+  "entity": "products",
+  "records": [
+    {
+      "sku": "CHA-VERDE-300ML",
+      "name": "Cha Verde 300ml",
+      "description": "Bebida pronta de cha verde sem gas.",
+      "category": "Bebidas",
+      "price_cents": 650,
+      "image_path": null,
+      "is_active": true
+    },
+    {
+      "sku": "BISCOITO-COOKIE",
+      "name": "Cookie Integral",
+      "description": "Pacote individual de cookie integral.",
+      "category": "Snacks",
+      "price_cents": 750,
+      "image_path": null,
+      "is_active": true
+    }
+  ]
+}
