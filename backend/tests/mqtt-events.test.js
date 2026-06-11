@@ -5,6 +5,7 @@ const mysql = require("../src/config/mysql");
 const mongodb = require("../src/config/mongodb");
 const MqttService = require("../src/services/MqttService");
 const MachineEventService = require("../src/services/MachineEventService");
+const DispenseCommandService = require("../src/services/DispenseCommandService");
 
 const runId = Date.now();
 const adminEmail = "admin@example.com";
@@ -224,6 +225,130 @@ async function getMachineEvents(machineId) {
   return rows;
 }
 
+describe("MQTT publish behavior", () => {
+  test("rejects MQTT publish without hanging when client is disconnected", async () => {
+    const fakeClient = createDisconnectedFakeMqttClient();
+    const mqttService = new MqttService(fakeClient);
+
+    await expect(mqttService.publishDispenseCommand({
+      id: 11,
+      sale_id: 21,
+      machine_id: 31,
+      product_id: 41,
+      slot_id: 51,
+      slot_code: "B1",
+      motor_id: 2,
+      sensor_column_id: 3,
+    })).rejects.toMatchObject({ code: "MQTT_NOT_CONNECTED" });
+
+    expect(fakeClient.calls).toHaveLength(0);
+  });
+
+  test("keeps pending dispense command when MQTT publish is unavailable", async () => {
+    const commandDAO = {
+      update: jest.fn(),
+    };
+    const mqttService = {
+      publishDispenseCommand: jest.fn().mockResolvedValue({
+        skipped: true,
+        reason: "MQTT client unavailable",
+      }),
+    };
+    const logService = {
+      create: jest.fn().mockResolvedValue(null),
+    };
+    const service = new DispenseCommandService(commandDAO, mqttService, logService);
+
+    const command = {
+      id: 12,
+      sale_id: 22,
+      machine_id: 32,
+      product_id: 42,
+      slot_id: 52,
+      motor_id: 3,
+      sensor_column_id: 4,
+      status: "PENDING",
+      mqtt_topic: "vending/32/actions",
+    };
+
+    const result = await service.publishPendingCommand(command, {
+      method: "POST",
+      endpoint: "/api/sales/checkout",
+    });
+
+    expect(result).toMatchObject({ id: 12, status: "PENDING" });
+    expect(commandDAO.update).not.toHaveBeenCalled();
+    expect(logService.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event_type: "ERROR",
+        table: "dispense_commands",
+        record_id: 12,
+        details: expect.objectContaining({
+          published_to_mqtt: false,
+          reason: "MQTT client unavailable",
+        }),
+      }),
+    );
+  });
+
+  test("marks dispense command as published after confirmed MQTT publish", async () => {
+    const publishedAt = new Date("2026-06-11T12:00:00.000Z");
+    jest.useFakeTimers().setSystemTime(publishedAt);
+    try {
+      const commandDAO = {
+        update: jest.fn().mockResolvedValue({
+          id: 13,
+          sale_id: 23,
+          machine_id: 33,
+          product_id: 43,
+          slot_id: 53,
+          motor_id: 5,
+          sensor_column_id: 6,
+          status: "PUBLISHED",
+          published_at: publishedAt,
+        }),
+      };
+      const mqttService = {
+        publishDispenseCommand: jest.fn().mockResolvedValue({
+          skipped: false,
+          queued: false,
+        }),
+      };
+      const logService = {
+        create: jest.fn().mockResolvedValue(null),
+      };
+      const service = new DispenseCommandService(commandDAO, mqttService, logService);
+
+      const result = await service.publishPendingCommand({
+        id: 13,
+        sale_id: 23,
+        machine_id: 33,
+        product_id: 43,
+        slot_id: 53,
+        motor_id: 5,
+        sensor_column_id: 6,
+        status: "PENDING",
+      });
+
+      expect(result).toMatchObject({ id: 13, status: "PUBLISHED" });
+      expect(commandDAO.update).toHaveBeenCalledWith(13, {
+        status: "PUBLISHED",
+        published_at: publishedAt,
+      });
+      expect(logService.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event_type: "UPDATE",
+          table: "dispense_commands",
+          record_id: 13,
+          details: { published_to_mqtt: true },
+        }),
+      );
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+});
+
 describe("MQTT integration and machine events", () => {
   let auth;
   let adminToken;
@@ -279,26 +404,6 @@ describe("MQTT integration and machine events", () => {
     });
   });
 
-  test("queues MQTT publish without hanging when client is disconnected", async () => {
-    const fakeClient = createDisconnectedFakeMqttClient();
-    const mqttService = new MqttService(fakeClient);
-
-    const result = await mqttService.publishDispenseCommand({
-      id: 11,
-      sale_id: 21,
-      machine_id: 31,
-      product_id: 41,
-      slot_id: 51,
-      slot_code: "B1",
-      motor_id: 2,
-      sensor_column_id: 3,
-    });
-
-    expect(result).toMatchObject({ skipped: false, queued: true });
-    expect(fakeClient.calls).toHaveLength(1);
-    expect(fakeClient.calls[0].topic).toBe("vending/31/actions");
-  });
-
   test("processes HEARTBEAT and updates machine last_seen_at", async () => {
     const fixture = await createCheckoutFixture({ suffix: "HEART", auth, adminToken });
 
@@ -332,7 +437,7 @@ describe("MQTT integration and machine events", () => {
     const command = await getCommand(fixture.checkout.dispense_command.id);
 
     expect(sale.status).toBe("DISPENSING");
-    expect(command.status).toBe("PUBLISHED");
+    expect(command.status).toBe("PENDING");
   });
 
   test("processes DISPENSE_SUCCESS idempotently", async () => {

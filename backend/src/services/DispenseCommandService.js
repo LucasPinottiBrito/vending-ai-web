@@ -65,7 +65,23 @@ class DispenseCommandService extends IService {
       return command;
     }
 
-    await this.mqttService.publishDispenseCommand(command);
+    let publishResult;
+    try {
+      publishResult = await this.mqttService.publishDispenseCommand(command);
+    } catch (error) {
+      await this.logMqttPublishFailure(command, context, error.message, error.code);
+      return command;
+    }
+
+    if (publishResult?.skipped) {
+      await this.logMqttPublishFailure(
+        command,
+        context,
+        publishResult.reason || "MQTT publish skipped",
+        "MQTT_PUBLISH_SKIPPED",
+      );
+      return command;
+    }
 
     const after = normalizeDispenseCommand(
       await this.dispenseCommandDAO.update(command.id, {
@@ -84,6 +100,21 @@ class DispenseCommandService extends IService {
     });
 
     return after;
+  }
+
+  async logMqttPublishFailure(command, context = {}, reason, code = "MQTT_PUBLISH_FAILED") {
+    await this.logCrud("ERROR", {
+      context,
+      table: "dispense_commands",
+      recordId: command.id,
+      before: command,
+      after: command,
+      details: {
+        published_to_mqtt: false,
+        reason,
+        code,
+      },
+    });
   }
 
   async logCrud(eventType, { context, table, recordId, before = null, after = null, details = {} }) {

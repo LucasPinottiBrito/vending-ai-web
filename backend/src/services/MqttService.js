@@ -1,6 +1,12 @@
 const env = require("../config/env");
 const { getMqttClient } = require("../config/mqtt");
 
+function createMqttError(message, code = "MQTT_PUBLISH_FAILED") {
+  const error = new Error(message);
+  error.code = code;
+  return error;
+}
+
 class MqttService {
   constructor(client = null, machineEventService = null) {
     this.client = client;
@@ -31,8 +37,25 @@ class MqttService {
 
     this.started = true;
     client.on("connect", () => {
+      console.info("[mqtt] connected");
       client.subscribe("vending/+/events", () => {});
       client.subscribe("vending/+/status", () => {});
+    });
+
+    client.on("error", (error) => {
+      console.error("[mqtt] error", error.message);
+    });
+
+    client.on("offline", () => {
+      console.warn("[mqtt] offline");
+    });
+
+    client.on("reconnect", () => {
+      console.info("[mqtt] reconnecting");
+    });
+
+    client.on("close", () => {
+      console.warn("[mqtt] connection closed");
     });
 
     client.on("message", (topic, message) => {
@@ -51,19 +74,18 @@ class MqttService {
     const body = JSON.stringify(payload);
 
     if (!client) {
-      return { topic, payload, skipped: true };
+      return { topic, payload, skipped: true, reason: "MQTT client unavailable" };
     }
 
     const options = { qos: 1 };
 
     if (client.connected === false) {
-      client.publish(topic, body, options, () => {});
-      return { topic, payload, skipped: false, queued: true };
+      throw createMqttError("MQTT client is not connected", "MQTT_NOT_CONNECTED");
     }
 
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
-        reject(new Error(`MQTT publish timeout for topic ${topic}`));
+        reject(createMqttError(`MQTT publish timeout for topic ${topic}`, "MQTT_PUBLISH_TIMEOUT"));
       }, 5000);
 
       client.publish(topic, body, options, (error) => {

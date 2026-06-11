@@ -201,7 +201,7 @@ describe("sales checkout routes", () => {
       machine_id: successFixture.machine_id,
       product_id: successFixture.product_id,
       slot_id: successFixture.slot_id,
-      status: "PUBLISHED",
+      status: "PENDING",
     });
     expect(response.body.data.wallet.balance_cents).toBe(1300);
     expect(response.body.data.idempotent).toBe(false);
@@ -234,7 +234,7 @@ describe("sales checkout routes", () => {
     );
     expect(saleItems).toHaveLength(1);
     expect(commands).toHaveLength(1);
-    expect(commands[0].status).toBe("PUBLISHED");
+    expect(commands[0].status).toBe("PENDING");
   });
 
   test("returns existing sale for duplicate checkout with same idempotency key", async () => {

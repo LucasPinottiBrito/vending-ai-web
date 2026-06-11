@@ -113,9 +113,12 @@ export function PurchaseStatusClient({ id }: { id: string }) {
 
   if (!data) return null;
 
-  const { sale, items } = data;
+  const { sale, items, dispense_commands: dispenseCommands } = data;
+  const dispenseCommand = dispenseCommands[0] || null;
   const isDispensed = sale.status === "DISPENSED";
   const isFailed = sale.status === "FAILED" || sale.status === "REFUNDED";
+  const isAwaitingCommandPublish =
+    sale.status === "AUTHORIZED" && dispenseCommand?.status === "PENDING";
 
   return (
     <RouteGuard>
@@ -135,6 +138,17 @@ export function PurchaseStatusClient({ id }: { id: string }) {
           </CardHeader>
           <CardContent className="space-y-6">
             <PurchaseStatusTimeline currentStatus={sale.status} />
+
+            {isAwaitingCommandPublish && (
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertTitle>Aguardando envio para a maquina</AlertTitle>
+                <AlertDescription>
+                  O pagamento foi autorizado e o comando de entrega esta pendente. A tela sera atualizada
+                  automaticamente quando a maquina iniciar a dispensa.
+                </AlertDescription>
+              </Alert>
+            )}
 
             {isDispensed && (
               <Alert className="bg-primary/5 border-primary/20">
