@@ -106,6 +106,8 @@ Caracteristicas implementadas:
 
 - layout base com menu superior;
 - navegacao publica, cliente e administrativa;
+- home com posicionamento de produto para compra em vending machines;
+- selecao de maquinas em `/catalogo` antes do catalogo de produtos;
 - breadcrumbs nas paginas administrativas;
 - client HTTP centralizado em `frontend/lib/api.ts`;
 - sessao JWT em `frontend/lib/auth.ts` usando token Bearer retornado pelo backend;
@@ -113,6 +115,7 @@ Caracteristicas implementadas:
 - envio automatico do token pelo client centralizado nas chamadas autenticadas;
 - tratamento padrao de erro via `ApiClientError`;
 - catalogo por maquina consumindo `/api/machines/slug/:slug/catalog`;
+- comportamento temporario de demonstracao exibindo maquinas como `Online` no catalogo enquanto o heartbeat ESP32-S3 nao estiver integrado;
 - login, cadastro, carteira, recarga mockada, compras e historico;
 - telas administrativas para maquinas, produtos, inventory, vendas, import/export JSON, logs XML, PDF e Chart.js;
 - paginas administrativas sem endpoint atual marcadas como pendentes, sem mocks e sem acesso direto aos bancos.
@@ -121,6 +124,7 @@ Documentacao:
 
 - [`frontend/README.md`](frontend/README.md)
 - [`docs/usage/frontend.md`](docs/usage/frontend.md)
+- [`docs/usage/frontend-polishing.md`](docs/usage/frontend-polishing.md)
 - [`docs/usage/auth-frontend.md`](docs/usage/auth-frontend.md)
 
 ## Backend Express

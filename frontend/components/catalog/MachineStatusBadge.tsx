@@ -5,10 +5,8 @@ interface MachineStatusBadgeProps {
   canSell: boolean;
 }
 
-export function MachineStatusBadge({ status, canSell }: MachineStatusBadgeProps) {
-  return (
-    <Badge variant={canSell ? "secondary" : "destructive"}>
-      {status}
-    </Badge>
-  );
+export function MachineStatusBadge(props: MachineStatusBadgeProps) {
+  void props;
+  // Demo mode: until ESP32-S3 heartbeat is fully integrated, catalog displays machines as online.
+  return <Badge variant="secondary">Online</Badge>;
 }

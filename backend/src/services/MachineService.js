@@ -7,6 +7,7 @@ const ApiError = require("../utils/ApiError");
 const { normalizeMachine } = require("../models/MachineModel");
 const { normalizeSlot } = require("../models/SlotModel");
 const { normalizeInventory } = require("../models/InventoryModel");
+const { isSupportedPhysicalSlot } = require("../utils/esp32Command");
 
 class MachineService extends IService {
   constructor(
@@ -79,7 +80,9 @@ class MachineService extends IService {
 
   async getCatalogBySlug(slug) {
     const machine = await this.getBySlug(slug);
-    const items = (await this.inventoryDAO.findCatalogByMachineId(machine.id)).map(normalizeInventory);
+    const items = (await this.inventoryDAO.findCatalogByMachineId(machine.id))
+      .map(normalizeInventory)
+      .filter(isSupportedPhysicalSlot);
 
     return {
       machine,

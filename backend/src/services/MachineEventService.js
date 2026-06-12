@@ -26,6 +26,29 @@ const VALID_EVENTS = new Set([
   "DISPENSE_FAILED",
   "MOTOR_ERROR",
   "MACHINE_ERROR",
+  "INVALID_JSON",
+  "UNKNOWN_COMMAND_TYPE",
+  "INVALID_COMMAND",
+  "MACHINE_BUSY",
+  "UNKNOWN_MOTOR_ID",
+  "UNKNOWN_SENSOR_COLUMN_ID",
+  "UNSUPPORTED_QUANTITY",
+  "COMMAND_DUPLICATED",
+  "PRODUCT_NOT_DETECTED",
+  "INTERNAL_ERROR",
+]);
+
+const ESP_REJECTION_EVENTS = new Set([
+  "INVALID_JSON",
+  "UNKNOWN_COMMAND_TYPE",
+  "INVALID_COMMAND",
+  "MACHINE_BUSY",
+  "UNKNOWN_MOTOR_ID",
+  "UNKNOWN_SENSOR_COLUMN_ID",
+  "UNSUPPORTED_QUANTITY",
+  "COMMAND_DUPLICATED",
+  "PRODUCT_NOT_DETECTED",
+  "INTERNAL_ERROR",
 ]);
 
 class MachineEventService extends IService {
@@ -76,11 +99,17 @@ class MachineEventService extends IService {
 
   async processMqttMessage(topic, message) {
     const payload = JSON.parse(Buffer.isBuffer(message) ? message.toString("utf8") : String(message));
-    const machineId = this.parseMachineIdFromTopic(topic) || payload.machine_id;
-    const eventType = payload.type || payload.event_type || (topic.endsWith("/status") ? "HEARTBEAT" : null);
+    const normalizedPayload = this.normalizeEventPayload(payload);
+    const machineId =
+      this.parseMachineIdFromTopic(topic) ||
+      normalizedPayload.machine_id;
+    const eventType =
+      normalizedPayload.type ||
+      normalizedPayload.event_type ||
+      (topic.endsWith("/status") ? "HEARTBEAT" : null);
 
     return this.processEvent({
-      ...payload,
+      ...normalizedPayload,
       event_type: eventType,
       machine_id: machineId,
       payload,
@@ -88,6 +117,7 @@ class MachineEventService extends IService {
   }
 
   async processEvent(data, context = {}) {
+    data = this.normalizeEventPayload(data);
     const eventType = data.event_type || data.type;
     if (!VALID_EVENTS.has(eventType)) {
       throw new ApiError(400, "Unsupported machine event type", "UNSUPPORTED_MACHINE_EVENT");
@@ -101,8 +131,40 @@ class MachineEventService extends IService {
       return this.processDispenseSuccess(data, context);
     }
 
+    if (eventType === "SENSOR_TRIGGERED" && (data.command_id || data.dispense_command_id || data.sale_id)) {
+      return this.processDispenseSuccess(data, context);
+    }
+
     if (eventType === "DISPENSE_FAILED") {
       return this.processDispenseFailed(data, context);
+    }
+
+    if (ESP_REJECTION_EVENTS.has(eventType)) {
+      return this.processEspRejection(data, context);
+    }
+
+    return this.processOperationalEvent(data, context);
+  }
+
+  async processEspRejection(data, context = {}) {
+    const eventType = data.event_type || data.type;
+    const commandId = data.command_id || data.dispense_command_id;
+    const saleId = data.sale_id;
+
+    if (commandId || saleId) {
+      return this.processDispenseFailed(
+        {
+          ...data,
+          event_type: eventType,
+          reason: eventType,
+          payload: {
+            ...(data.payload || data),
+            rejection_type: eventType,
+            rejection_reason: data.reason || data.payload?.reason || null,
+          },
+        },
+        context,
+      );
     }
 
     return this.processOperationalEvent(data, context);
@@ -158,6 +220,35 @@ class MachineEventService extends IService {
     } finally {
       connection.release();
     }
+  }
+
+  normalizeEventPayload(payload = {}) {
+    const normalized = { ...payload };
+
+    const aliases = {
+      event_type: ["event_type", "eventType", "type"],
+      machine_id: ["machine_id", "machineId"],
+      command_id: ["command_id", "commandId"],
+      dispense_command_id: ["dispense_command_id", "dispenseCommandId"],
+      sale_id: ["sale_id", "saleId"],
+      product_id: ["product_id", "productId"],
+      slot_id: ["slot_id", "slotId"],
+      sensor_column_id: ["sensor_column_id", "sensorColumnId"],
+      motor_id: ["motor_id", "motorId"],
+    };
+
+    for (const [target, keys] of Object.entries(aliases)) {
+      if (normalized[target] !== undefined && normalized[target] !== null) {
+        continue;
+      }
+
+      const sourceKey = keys.find((key) => payload[key] !== undefined && payload[key] !== null);
+      if (sourceKey) {
+        normalized[target] = payload[sourceKey];
+      }
+    }
+
+    return normalized;
   }
 
   async processOperationalEvent(data, context = {}) {
@@ -393,10 +484,22 @@ class MachineEventService extends IService {
 
   async resolveCommand(data, connection, forUpdate = false) {
     const commandId = data.command_id || data.dispense_command_id;
-    if (!commandId) return null;
-    return forUpdate
-      ? this.dispenseCommandDAO.findByIdForUpdate(commandId, connection)
-      : this.dispenseCommandDAO.findById(commandId, connection);
+    if (commandId) {
+      return forUpdate
+        ? this.dispenseCommandDAO.findByIdForUpdate(commandId, connection)
+        : this.dispenseCommandDAO.findById(commandId, connection);
+    }
+
+    if (data.sale_id) {
+      if (forUpdate) {
+        return this.dispenseCommandDAO.findFirstBySaleIdForUpdate(data.sale_id, connection);
+      }
+
+      const commands = await this.dispenseCommandDAO.findBySaleId(data.sale_id, connection);
+      return commands[0] || null;
+    }
+
+    return null;
   }
 
   async findRefundTransactions(saleId, connection) {

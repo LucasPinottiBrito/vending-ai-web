@@ -18,14 +18,20 @@ Este guia descreve como validar a integracao MQTT sem ESP32-S3 fisico.
 
 Se o cliente MQTT ainda nao estiver conectado ao broker, o backend enfileira a publicacao no `mqtt.js` e continua a resposta HTTP sem travar o checkout.
 
+O publish usa `qos: 1` e `retain: false`. O payload enviado para a ESP32-S3 e menor que `1024` bytes, nao inclui `expires_at` e usa `command_id` numerico de `dispense_commands.id`.
+
+Para a maquina fisica atual (`machine_id = 1`), apenas os pares `motor_id=1/sensor_column_id=1` e `motor_id=2/sensor_column_id=2` sao vendidos. Slots incompatíveis sao bloqueados no checkout antes de debitar wallet ou reservar estoque.
+
 ## Fluxo de Sucesso
 
 1. Simulador publica `DISPENSE_STARTED`.
 2. Backend registra evento e muda venda para `DISPENSING`.
-3. Simulador publica `DISPENSE_SUCCESS`.
+3. Simulador publica `SENSOR_TRIGGERED` ou `DISPENSE_SUCCESS`.
 4. Backend muda comando para `SUCCESS`.
 5. Backend muda venda para `DISPENSED`.
 6. Backend baixa estoque reservado definitivamente.
+
+`SENSOR_TRIGGERED` e considerado confirmacao fisica de queda quando identifica `command_id` ou `sale_id`. Se `DISPENSE_SUCCESS` chegar depois, o backend nao baixa o estoque novamente.
 
 ## Fluxo de Falha
 
@@ -38,6 +44,25 @@ Se o cliente MQTT ainda nao estiver conectado ao broker, o backend enfileira a p
 7. Backend muda venda para `REFUNDED`.
 
 O processamento e idempotente: repetir o mesmo sucesso nao baixa estoque duas vezes, e repetir a mesma falha nao estorna duas vezes.
+
+## Rejeicoes da ESP32-S3
+
+A ESP pode publicar rejeicoes como:
+
+```txt
+INVALID_JSON
+UNKNOWN_COMMAND_TYPE
+INVALID_COMMAND
+MACHINE_BUSY
+UNKNOWN_MOTOR_ID
+UNKNOWN_SENSOR_COLUMN_ID
+UNSUPPORTED_QUANTITY
+COMMAND_DUPLICATED
+PRODUCT_NOT_DETECTED
+INTERNAL_ERROR
+```
+
+Se o evento trouxer `command_id` ou `sale_id`, o backend trata a rejeicao como falha terminal: comando `FAILED`, reserva liberada, wallet estornada e venda `REFUNDED`. A repeticao do mesmo evento nao duplica o estorno. Se nao houver comando ou venda identificavel, o evento e registrado para diagnostico sem alterar vendas.
 
 ## Heartbeat
 
@@ -72,10 +97,12 @@ npm test
 Teste coberto:
 
 - publish MQTT mockado;
+- contrato ESP32-S3 do payload `DISPENSE`;
 - `HEARTBEAT`;
 - `DISPENSE_STARTED`;
 - `DISPENSE_SUCCESS`;
 - `DISPENSE_FAILED`;
+- rejeicoes da ESP32-S3;
 - idempotencia de sucesso duplicado;
 - idempotencia de falha duplicada;
 - estorno unico.

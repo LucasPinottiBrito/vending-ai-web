@@ -52,6 +52,7 @@ http://localhost:3000
 Publicas e cliente:
 
 - `/`
+- `/catalogo`
 - `/login`
 - `/register`
 - `/m/[slug]`
@@ -118,15 +119,16 @@ Logout chama `POST /api/auth/logout` quando existe token local e sempre limpa a 
 1. Suba o backend em `http://localhost:4000`.
 2. Rode `npm run dev`.
 3. Abra `http://localhost:3000`.
-4. Confirme o indicador `API online` vindo de `/health`.
+4. Confirme a home com linguagem de produto e chamadas para selecionar maquinas.
 5. Teste login com os seeds:
    - `admin@example.com` / `Admin@123`
    - `cliente@example.com` / `Cliente@123`
-6. Acesse `/m/hall-principal` e confira catalogo vindo do backend.
-7. Acesse `/account/wallet` e teste recarga mockada.
-8. Acesse `/admin` com usuario ADMIN e navegue entre CRUDs, JSON, XML, PDF e Chart.js.
+6. Acesse `/catalogo`, escolha uma maquina e confira o catalogo em `/m/[slug]`.
+7. Acesse `/account/wallet` e teste a recarga de demonstracao.
+8. Acesse `/admin` com usuario ADMIN e navegue entre gerenciamento, JSON, XML, PDF e indicadores.
 
 Mais detalhes: `../docs/usage/frontend.md`.
+Polimento de produto: `../docs/usage/frontend-polishing.md`.
 Fluxo de autenticacao: `../docs/usage/auth-frontend.md`.
 Fluxo do catalogo (QR Code): `../docs/usage/catalog-flow.md`.
 Fluxo da carteira (Recarga): `../docs/usage/wallet-flow.md`.

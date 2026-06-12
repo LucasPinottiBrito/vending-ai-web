@@ -4,7 +4,7 @@ export default function AdminUsersPage() {
   return (
     <PendingAdminPage
       title="Usuarios"
-      description="A especificacao pede admin users, mas o backend atual ainda nao expoe /api/admin/users."
+      description="Area reservada para acompanhar perfis, acessos e usuarios da plataforma."
     />
   );
 }

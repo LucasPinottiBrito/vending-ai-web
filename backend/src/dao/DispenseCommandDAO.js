@@ -72,6 +72,22 @@ class DispenseCommandDAO extends IDAO {
     return rows;
   }
 
+  async findFirstBySaleIdForUpdate(saleId, connection = mysql) {
+    const [rows] = await connection.query(
+      `SELECT id, command_uuid, sale_id, machine_id, product_id, slot_id, motor_id,
+              sensor_column_id, status, mqtt_topic, payload_json, attempts_allowed,
+              attempts_reported, last_error, published_at, completed_at, created_at, updated_at
+       FROM dispense_commands
+       WHERE sale_id = ?
+       ORDER BY id ASC
+       LIMIT 1
+       FOR UPDATE`,
+      [saleId],
+    );
+
+    return rows[0] || null;
+  }
+
   async findByCommandUuid(commandUuid, connection = mysql) {
     const [rows] = await connection.query(
       `SELECT id, command_uuid, sale_id, machine_id, product_id, slot_id, motor_id,

@@ -149,12 +149,12 @@ export function ReportsAdmin() {
 
   return (
     <AdminShell>
-      <PageHeader title="Relatorios PDF" description="PDF gerado no frontend com jsPDF." />
+      <PageHeader title="Relatorios PDF" description="Gere documentos de vendas para analise e apresentacao." />
       <Card>
         <CardHeader>
           <CardTitle>Filtros</CardTitle>
           <CardDescription>
-            Os dados do relatorio continuam vindo do backend/MySQL.
+            Escolha o periodo e os filtros para montar o relatorio de vendas.
           </CardDescription>
         </CardHeader>
         <CardContent>

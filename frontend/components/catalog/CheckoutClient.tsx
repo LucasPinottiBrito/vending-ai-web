@@ -1,14 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import { AlertCircle, Wallet } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { AlertCircle, Wallet } from "lucide-react";
+import { toast } from "sonner";
 
 import { CatalogItem, CatalogMachine } from "@/components/catalog/CatalogClient";
 import { ErrorAlert } from "@/components/feedback/ErrorAlert";
 import { LoadingState } from "@/components/feedback/LoadingState";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -17,7 +18,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { apiRequest, getErrorMessage } from "@/lib/api";
 import { getStoredSession } from "@/lib/auth";
 import { formatCurrency } from "@/lib/formatters";
@@ -46,7 +46,9 @@ export function CheckoutClient({
             `/api/machines/slug/${slug}/catalog`,
             { token: null },
           ),
-          apiRequest<{ wallet: { balance_cents: number } }>("/api/wallet/balance").catch(() => null),
+          apiRequest<{ wallet: { balance_cents: number } }>(
+            "/api/wallet/balance",
+          ).catch(() => null),
         ]);
 
         setMachine(catalogRes.data.machine);
@@ -55,7 +57,7 @@ export function CheckoutClient({
             (candidate) => Number(candidate.slot_id) === Number(slotId),
           ) ?? null,
         );
-        
+
         if (balanceRes) {
           setBalance(balanceRes.data.wallet.balance_cents);
         }
@@ -77,7 +79,9 @@ export function CheckoutClient({
       return;
     }
 
-    if (!item || !machine) return;
+    if (!item || !machine) {
+      return;
+    }
 
     if (balance !== null && balance < item.price_cents) {
       toast.error("Saldo insuficiente");
@@ -115,7 +119,7 @@ export function CheckoutClient({
   }
 
   if (isLoading) {
-    return <LoadingState label="Carregando detalhes do checkout..." />;
+    return <LoadingState label="Carregando detalhes da compra..." />;
   }
 
   if (error) {
@@ -126,12 +130,14 @@ export function CheckoutClient({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Item ou Máquina indisponível</CardTitle>
-          <CardDescription>Não foi possível carregar os dados para este checkout.</CardDescription>
+          <CardTitle>Item ou maquina indisponivel</CardTitle>
+          <CardDescription>
+            Nao foi possivel carregar os dados para esta compra.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <Button asChild variant="outline">
-            <Link href={`/m/${slug}`}>Voltar ao catálogo</Link>
+            <Link href={`/m/${slug}`}>Voltar ao catalogo</Link>
           </Button>
         </CardContent>
       </Card>
@@ -139,14 +145,15 @@ export function CheckoutClient({
   }
 
   const hasBalance = balance === null || balance >= item.price_cents;
-  const isMachineOnline = machine.status === "ONLINE";
+  // Demo mode: until ESP32-S3 heartbeat is fully integrated, catalog displays machines as online.
+  const isMachineOnline = true;
 
   return (
     <div className="flex flex-col gap-6">
-      <CheckoutSummary 
-        item={item} 
-        machineName={machine.name} 
-        machineLocation={machine.location} 
+      <CheckoutSummary
+        item={item}
+        machineName={machine.name}
+        machineLocation={machine.location}
       />
 
       <Card>
@@ -156,46 +163,43 @@ export function CheckoutClient({
               <Wallet className="h-5 w-5 text-muted-foreground" />
               <CardTitle className="text-lg">Pagamento</CardTitle>
             </div>
-            {balance !== null && (
+            {balance !== null ? (
               <p className="font-semibold">{formatCurrency(balance)}</p>
-            )}
+            ) : null}
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {!isMachineOnline && (
+          {!hasBalance ? (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Máquina Offline</AlertTitle>
-              <AlertDescription>
-                Esta máquina não está aceitando vendas no momento.
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {!hasBalance && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Saldo Insuficiente</AlertTitle>
+              <AlertTitle>Saldo insuficiente</AlertTitle>
               <AlertDescription className="flex flex-col gap-2">
-                Você precisa de mais {formatCurrency(item.price_cents - (balance || 0))} para esta compra.
+                Voce precisa de mais{" "}
+                {formatCurrency(item.price_cents - (balance || 0))} para esta
+                compra.
                 <Button asChild size="sm" variant="outline" className="w-fit">
                   <Link href="/account/wallet/topup">Recarregar agora</Link>
                 </Button>
               </AlertDescription>
             </Alert>
-          )}
+          ) : null}
 
           <Button
             className="w-full"
             size="lg"
             onClick={checkout}
-            disabled={isSubmitting || item.available_for_sale <= 0 || !hasBalance || !isMachineOnline}
+            disabled={
+              isSubmitting ||
+              item.available_for_sale <= 0 ||
+              !hasBalance ||
+              !isMachineOnline
+            }
           >
-            {isSubmitting ? "Autorizando..." : "Confirmar e Comprar"}
+            {isSubmitting ? "Autorizando..." : "Confirmar e comprar"}
           </Button>
 
           <p className="text-center text-xs text-muted-foreground">
-            Ao clicar em confirmar, o saldo será debitado imediatamente.
+            Ao confirmar, seu saldo sera debitado e a retirada sera iniciada.
           </p>
         </CardContent>
       </Card>

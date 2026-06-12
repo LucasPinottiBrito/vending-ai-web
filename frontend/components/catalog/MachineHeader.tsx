@@ -14,8 +14,11 @@ export function MachineHeader({ name, location, status, canSell }: MachineHeader
       <CardHeader>
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div>
-            <CardTitle>{name || "Máquina"}</CardTitle>
-            <CardDescription>{location || "Localização não informada"}</CardDescription>
+            <CardTitle>{name || "Maquina"}</CardTitle>
+            <CardDescription>{location || "Localizacao nao informada"}</CardDescription>
+            <p className="mt-2 text-sm text-muted-foreground">
+              Produtos disponiveis nesta maquina
+            </p>
           </div>
           <MachineStatusBadge status={status} canSell={canSell} />
         </div>

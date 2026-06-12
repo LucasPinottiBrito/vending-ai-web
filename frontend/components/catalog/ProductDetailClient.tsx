@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 
 import { CatalogItem } from "@/components/catalog/CatalogClient";
+import { ProductImage } from "@/components/catalog/ProductImage";
 import { ErrorAlert } from "@/components/feedback/ErrorAlert";
 import { LoadingState } from "@/components/feedback/LoadingState";
 import { Button } from "@/components/ui/button";
@@ -56,7 +57,7 @@ export function ProductDetailClient({
         <CardHeader>
           <CardTitle>Produto nao encontrado</CardTitle>
           <CardDescription>
-            O catalogo da maquina nao retornou este produto.
+            Este item nao esta disponivel no catalogo da maquina.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -74,28 +75,39 @@ export function ProductDetailClient({
         <CardTitle>{item.product_name}</CardTitle>
         <CardDescription>Slot {item.slot_code}</CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        <dl className="grid gap-3 text-sm sm:grid-cols-2">
-          <div>
-            <dt className="text-muted-foreground">Preco</dt>
-            <dd className="font-medium">{formatCurrency(item.price_cents)}</dd>
-          </div>
-          <div>
-            <dt className="text-muted-foreground">Disponivel</dt>
-            <dd className="font-medium">{item.available_for_sale}</dd>
-          </div>
-          <div>
-            <dt className="text-muted-foreground">Motor</dt>
-            <dd className="font-medium">{item.motor_id}</dd>
-          </div>
-          <div>
-            <dt className="text-muted-foreground">Sensor</dt>
-            <dd className="font-medium">{item.sensor_column_id}</dd>
-          </div>
-        </dl>
-        <Button asChild>
-          <Link href={`/m/${slug}/checkout/${item.slot_id}`}>Continuar compra</Link>
-        </Button>
+      <CardContent className="grid gap-5 md:grid-cols-[280px_1fr]">
+        <div className="relative aspect-square overflow-hidden rounded-lg bg-muted">
+          <ProductImage item={item} />
+        </div>
+        <div className="flex flex-col gap-4">
+          <dl className="grid gap-3 text-sm sm:grid-cols-2">
+            <div>
+              <dt className="text-muted-foreground">Preco</dt>
+              <dd className="font-medium">{formatCurrency(item.price_cents)}</dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Disponibilidade</dt>
+              <dd className="font-medium">
+                {item.available_for_sale > 0
+                  ? `${item.available_for_sale} unidade(s)`
+                  : "Indisponivel"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-muted-foreground">Codigo do slot</dt>
+              <dd className="font-medium">{item.slot_code}</dd>
+            </div>
+          </dl>
+          {item.available_for_sale > 0 ? (
+            <Button asChild>
+              <Link href={`/m/${slug}/checkout/${item.slot_id}`}>
+                Continuar compra
+              </Link>
+            </Button>
+          ) : (
+            <Button disabled>Indisponivel</Button>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

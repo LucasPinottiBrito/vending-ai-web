@@ -56,8 +56,9 @@ As credenciais estao em `database/mysql/seed.sql`:
 
 1. Abrir `/`.
 2. Confirmar menu superior com links para inicio, catalogo, conta e admin.
-3. Confirmar indicador `API online` quando o backend responde `/health`.
-4. Abrir `/machine/hall-principal` e confirmar redirecionamento para `/m/hall-principal`.
+3. Confirmar home com linguagem de produto, CTAs para maquinas e conta.
+4. Abrir `/catalogo` e confirmar selecao de maquinas disponiveis.
+5. Abrir `/machine/hall-principal` e confirmar redirecionamento para `/m/hall-principal`.
 
 ### Autenticacao
 
@@ -69,13 +70,14 @@ As credenciais estao em `database/mysql/seed.sql`:
 
 ### Catalogo e compra
 
-1. Abrir `/m/hall-principal`.
-2. Confirmar que os produtos vem de `/api/machines/slug/hall-principal/catalog`.
-3. Usar busca por produto.
-4. Abrir detalhes de um produto.
-5. Abrir checkout de um slot.
-6. Confirmar que o frontend envia somente `machine_id`, `slot_id` e `product_id`; preco, saldo e estoque sao validados no backend.
-7. Em compra autorizada, confirmar redirecionamento para `/purchase/[id]`.
+1. Abrir `/catalogo`.
+2. Selecionar uma maquina e navegar para `/m/[slug]`.
+3. Confirmar que os produtos vem do catalogo publico da maquina.
+4. Usar busca por produto.
+5. Abrir detalhes de um produto.
+6. Abrir checkout de um slot.
+7. Confirmar que o frontend envia somente `machine_id`, `slot_id` e `product_id`; preco, saldo e estoque sao validados no backend.
+8. Em compra autorizada, confirmar redirecionamento para `/purchase/[id]`.
 
 ### Conta e carteira
 

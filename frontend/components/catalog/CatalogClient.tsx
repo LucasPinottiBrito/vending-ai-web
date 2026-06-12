@@ -12,9 +12,9 @@ import { Input } from "@/components/ui/input";
 import { apiRequest, getErrorMessage } from "@/lib/api";
 import { getStoredSession } from "@/lib/auth";
 
+import { EmptyState } from "./EmptyState";
 import { MachineHeader } from "./MachineHeader";
 import { ProductGrid } from "./ProductGrid";
-import { EmptyState } from "./EmptyState";
 
 export type CatalogMachine = {
   id: number;
@@ -103,8 +103,8 @@ export function CatalogClient({ slug }: { slug: string }) {
       return;
     }
 
-    if (!data?.machine.can_sell || item.available_for_sale <= 0) {
-      toast.error("Produto indisponível para compra.");
+    if (!data || item.available_for_sale <= 0) {
+      toast.error("Produto indisponivel para compra.");
       return;
     }
 
@@ -138,7 +138,7 @@ export function CatalogClient({ slug }: { slug: string }) {
   }
 
   if (isLoading) {
-    return <LoadingState label="Carregando catálogo" />;
+    return <LoadingState label="Carregando catalogo" />;
   }
 
   if (error) {
@@ -146,16 +146,19 @@ export function CatalogClient({ slug }: { slug: string }) {
   }
 
   if (!data) {
-    return <EmptyState message="Máquina não encontrada." />;
+    return <EmptyState message="Maquina nao encontrada." />;
   }
+
+  // Demo mode: until ESP32-S3 heartbeat is fully integrated, catalog displays machines as online.
+  const demoCanSell = true;
 
   return (
     <div className="flex flex-col gap-6">
       <MachineHeader
-        name={data.machine.name || "Máquina"}
+        name={data.machine.name || "Maquina"}
         location={data.machine.location || data.machine.slug}
-        status={data.machine.status}
-        canSell={data.machine.can_sell}
+        status="ONLINE"
+        canSell={demoCanSell}
       />
 
       <Card>
@@ -164,7 +167,7 @@ export function CatalogClient({ slug }: { slug: string }) {
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               className="pl-9"
-              placeholder="Buscar produto pelo nome..."
+              placeholder="Buscar produto..."
               value={query}
               onChange={(event) => setQuery(event.target.value)}
             />
@@ -177,11 +180,11 @@ export function CatalogClient({ slug }: { slug: string }) {
           items={filteredItems}
           slug={slug}
           processingSlot={processingSlot}
-          canSell={data.machine.can_sell}
+          canSell={demoCanSell}
           onCheckout={checkout}
         />
       ) : (
-        <EmptyState />
+        <EmptyState message="Nenhum produto encontrado para esta busca." />
       )}
     </div>
   );

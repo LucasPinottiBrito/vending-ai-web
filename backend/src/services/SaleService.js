@@ -17,6 +17,7 @@ const { normalizeDispenseCommand } = require("../models/DispenseCommandModel");
 const { normalizeInventory } = require("../models/InventoryModel");
 const { normalizeWallet } = require("../models/WalletModel");
 const { normalizeWalletTransaction } = require("../models/WalletTransactionModel");
+const { isSupportedPhysicalSlot, validateSlotCode } = require("../utils/esp32Command");
 
 class SaleService extends IService {
   constructor(
@@ -317,6 +318,20 @@ class SaleService extends IService {
 
     if (!inventory.product_is_active) {
       throw new ApiError(409, "Product is inactive", "PRODUCT_NOT_AVAILABLE");
+    }
+
+    if (!isSupportedPhysicalSlot(inventory)) {
+      throw new ApiError(
+        409,
+        "Slot hardware is not supported by the current ESP32-S3 machine",
+        "SLOT_HARDWARE_NOT_SUPPORTED",
+      );
+    }
+
+    try {
+      validateSlotCode(inventory.slot_code);
+    } catch (error) {
+      throw new ApiError(409, error.message, "SLOT_HARDWARE_NOT_SUPPORTED");
     }
   }
 

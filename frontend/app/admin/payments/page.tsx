@@ -4,7 +4,7 @@ export default function AdminPaymentsPage() {
   return (
     <PendingAdminPage
       title="Pagamentos"
-      description="O backend atual permite consultar pagamento por ID, mas ainda nao expoe listagem administrativa."
+      description="Area reservada para acompanhar recargas, pagamentos e conciliacao operacional."
     />
   );
 }

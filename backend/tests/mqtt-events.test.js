@@ -347,6 +347,116 @@ describe("MQTT publish behavior", () => {
       jest.useRealTimers();
     }
   });
+
+  test("publishes dispense command payload using mocked MQTT client", async () => {
+    const fakeClient = createFakeMqttClient();
+    const mqttService = new MqttService(fakeClient);
+
+    await mqttService.publishDispenseCommand({
+      id: 10,
+      sale_id: 20,
+      machine_id: 30,
+      product_id: 40,
+      slot_id: 50,
+      slot_code: "A1",
+      motor_id: 1,
+      sensor_column_id: 2,
+      quantity: 1,
+      attempts_allowed: 2,
+      timeout_ms_per_attempt: 10000,
+      payload_json: {
+        issued_at: "2026-06-08T12:00:00.000Z",
+        expires_at: "2026-06-08T12:01:00.000Z",
+      },
+      mqtt_topic: "vending/30/actions",
+    });
+
+    expect(fakeClient.calls).toHaveLength(1);
+    expect(fakeClient.calls[0].topic).toBe("vending/30/actions");
+    expect(fakeClient.calls[0].options).toEqual({ qos: 1, retain: false });
+    expect(fakeClient.calls[0].payload).toMatchObject({
+      type: "DISPENSE",
+      command_id: 10,
+      sale_id: 20,
+      machine_id: 30,
+      product_id: 40,
+      slot_id: 50,
+      slot_code: "A1",
+      motor_id: 1,
+      sensor_column_id: 2,
+      quantity: 1,
+      attempts_allowed: 2,
+      timeout_ms_per_attempt: 10000,
+      issued_at: "2026-06-08T12:00:00.000Z",
+    });
+    expect(typeof fakeClient.calls[0].payload.command_id).toBe("number");
+    expect(fakeClient.calls[0].payload).not.toHaveProperty("expires_at");
+    expect(Buffer.byteLength(JSON.stringify(fakeClient.calls[0].payload), "utf8")).toBeLessThan(1024);
+  });
+
+  test("publishes valid physical machine payload for motor 2 and sensor 2", async () => {
+    const fakeClient = createFakeMqttClient();
+    const mqttService = new MqttService(fakeClient);
+
+    await mqttService.publishDispenseCommand({
+      id: 124,
+      sale_id: 457,
+      machine_id: 1,
+      product_id: 11,
+      slot_id: 4,
+      slot_code: "B1",
+      motor_id: 2,
+      sensor_column_id: 2,
+      attempts_allowed: 2,
+      payload_json: {
+        quantity: 1,
+        timeout_ms_per_attempt: 10000,
+        issued_at: "2026-06-08T12:05:00.000Z",
+      },
+    });
+
+    expect(fakeClient.calls).toHaveLength(1);
+    expect(fakeClient.calls[0].topic).toBe("vending/1/actions");
+    expect(fakeClient.calls[0].payload).toEqual({
+      type: "DISPENSE",
+      command_id: 124,
+      sale_id: 457,
+      machine_id: 1,
+      product_id: 11,
+      slot_id: 4,
+      slot_code: "B1",
+      motor_id: 2,
+      sensor_column_id: 2,
+      quantity: 1,
+      attempts_allowed: 2,
+      timeout_ms_per_attempt: 10000,
+      issued_at: "2026-06-08T12:05:00.000Z",
+    });
+  });
+
+  test("normalizes ESP camelCase event payload before processing", async () => {
+    const service = new MachineEventService();
+    service.processEvent = jest.fn().mockResolvedValue({ ok: true });
+
+    await service.processMqttMessage(
+      "vending/1/events",
+      Buffer.from(JSON.stringify({
+        type: "DISPENSE_SUCCESS",
+        commandId: 11,
+        saleId: 22,
+        machineId: 1,
+      })),
+    );
+
+    expect(service.processEvent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event_type: "DISPENSE_SUCCESS",
+        command_id: 11,
+        sale_id: 22,
+        machine_id: 1,
+      }),
+    );
+  });
 });
 
 describe("MQTT integration and machine events", () => {
@@ -365,43 +475,6 @@ describe("MQTT integration and machine events", () => {
     await cleanup();
     await mysql.closePool();
     await mongodb.closeMongoConnection();
-  });
-
-  test("publishes dispense command payload using mocked MQTT client", async () => {
-    const fakeClient = createFakeMqttClient();
-    const mqttService = new MqttService(fakeClient);
-
-    await mqttService.publishDispenseCommand({
-      id: 10,
-      sale_id: 20,
-      machine_id: 30,
-      product_id: 40,
-      slot_id: 50,
-      slot_code: "A1",
-      motor_id: 1,
-      sensor_column_id: 2,
-      quantity: 1,
-      attempts_allowed: 2,
-      timeout_ms_per_attempt: 10000,
-      mqtt_topic: "vending/30/actions",
-    });
-
-    expect(fakeClient.calls).toHaveLength(1);
-    expect(fakeClient.calls[0].topic).toBe("vending/30/actions");
-    expect(fakeClient.calls[0].payload).toMatchObject({
-      type: "DISPENSE",
-      command_id: 10,
-      sale_id: 20,
-      machine_id: 30,
-      product_id: 40,
-      slot_id: 50,
-      slot_code: "A1",
-      motor_id: 1,
-      sensor_column_id: 2,
-      quantity: 1,
-      attempts_allowed: 2,
-      timeout_ms_per_attempt: 10000,
-    });
   });
 
   test("processes HEARTBEAT and updates machine last_seen_at", async () => {
@@ -468,6 +541,27 @@ describe("MQTT integration and machine events", () => {
     expect(inventory.quantity_reserved).toBe(0);
   });
 
+  test("processes SENSOR_TRIGGERED as successful physical dispense", async () => {
+    const fixture = await createCheckoutFixture({ suffix: "SENSOROK", auth, adminToken });
+
+    await eventService.processEvent({
+      event_type: "SENSOR_TRIGGERED",
+      machine_id: fixture.machine.id,
+      command_id: fixture.checkout.dispense_command.id,
+      sale_id: fixture.checkout.sale.id,
+      payload: { test_run_id: runId, sensor_column_id: fixture.slot.sensor_column_id },
+    });
+
+    const sale = await getSale(fixture.checkout.sale.id);
+    const command = await getCommand(fixture.checkout.dispense_command.id);
+    const inventory = await getInventory(fixture.inventory.id);
+
+    expect(sale.status).toBe("DISPENSED");
+    expect(command.status).toBe("SUCCESS");
+    expect(inventory.quantity_available).toBe(1);
+    expect(inventory.quantity_reserved).toBe(0);
+  });
+
   test("processes DISPENSE_FAILED idempotently and refunds only once", async () => {
     const fixture = await createCheckoutFixture({ suffix: "FAIL", auth, adminToken });
 
@@ -499,5 +593,56 @@ describe("MQTT integration and machine events", () => {
     expect(wallet.balance_cents).toBeGreaterThanOrEqual(700);
     expect(refunds).toHaveLength(1);
     expect(refunds[0].amount_cents).toBe(800);
+  });
+
+  test("processes ESP rejection event idempotently and refunds only once", async () => {
+    const fixture = await createCheckoutFixture({ suffix: "REJECT", auth, adminToken });
+
+    await eventService.processEvent({
+      event_type: "INVALID_COMMAND",
+      machine_id: fixture.machine.id,
+      command_id: fixture.checkout.dispense_command.id,
+      sale_id: fixture.checkout.sale.id,
+      payload: { test_run_id: runId, reason: "invalid physical command" },
+    });
+    await eventService.processEvent({
+      event_type: "INVALID_COMMAND",
+      machine_id: fixture.machine.id,
+      command_id: fixture.checkout.dispense_command.id,
+      sale_id: fixture.checkout.sale.id,
+      payload: { test_run_id: runId, duplicate: true },
+    });
+
+    const sale = await getSale(fixture.checkout.sale.id);
+    const command = await getCommand(fixture.checkout.dispense_command.id);
+    const inventory = await getInventory(fixture.inventory.id);
+    const refunds = await getRefunds(auth.user.id, fixture.checkout.sale.id);
+
+    expect(sale.status).toBe("REFUNDED");
+    expect(sale.failure_reason).toBe("INVALID_COMMAND");
+    expect(command.status).toBe("FAILED");
+    expect(command.last_error).toBe("INVALID_COMMAND");
+    expect(inventory.quantity_available).toBe(2);
+    expect(inventory.quantity_reserved).toBe(0);
+    expect(refunds).toHaveLength(1);
+    expect(refunds[0].amount_cents).toBe(800);
+  });
+
+  test("records ESP rejection without refund when command cannot be resolved", async () => {
+    const fixture = await createCheckoutFixture({ suffix: "REJECTNOID", auth, adminToken });
+
+    const result = await eventService.processEvent({
+      event_type: "MACHINE_BUSY",
+      machine_id: fixture.machine.id,
+      payload: { test_run_id: runId, reason: "machine busy without command id" },
+    });
+
+    const sale = await getSale(fixture.checkout.sale.id);
+    const command = await getCommand(fixture.checkout.dispense_command.id);
+
+    expect(result.event.event_type).toBe("MACHINE_BUSY");
+    expect(result.command).toBeNull();
+    expect(sale.status).toBe("AUTHORIZED");
+    expect(command.status).toBe("PENDING");
   });
 });

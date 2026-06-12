@@ -8,6 +8,7 @@ const runId = Date.now();
 const userEmail = `sale.user.${runId}@example.com`;
 const slugPrefix = `sale-machine-${runId}`;
 const skuPrefix = `SALE-PROD-${runId}`;
+const slotCodePrefix = `T${String(runId).slice(-8)}`;
 
 async function cleanup() {
   const [users] = await mysql.query("SELECT id FROM users WHERE email = ?", [userEmail]);
@@ -20,6 +21,9 @@ async function cleanup() {
 
   const [products] = await mysql.query("SELECT id FROM products WHERE sku LIKE ?", [`${skuPrefix}%`]);
   const productIds = products.map((product) => product.id);
+
+  const [slots] = await mysql.query("SELECT id FROM slots WHERE code LIKE ?", [`${slotCodePrefix}%`]);
+  const slotIds = slots.map((slot) => slot.id);
 
   if (userIds.length > 0) {
     await mysql.query("DELETE FROM dispense_commands WHERE sale_id IN (SELECT id FROM sales WHERE user_id IN (?))", [userIds]);
@@ -35,6 +39,15 @@ async function cleanup() {
     await mysql.query("DELETE FROM inventory WHERE machine_id IN (?)", [machineIds]);
     await mysql.query("DELETE FROM slots WHERE machine_id IN (?)", [machineIds]);
     await mysql.query("DELETE FROM machines WHERE id IN (?)", [machineIds]);
+  }
+
+  if (slotIds.length > 0) {
+    await mysql.query("DELETE FROM inventory WHERE slot_id IN (?)", [slotIds]);
+    await mysql.query("DELETE FROM slots WHERE id IN (?)", [slotIds]);
+  }
+
+  if (productIds.length > 0) {
+    await mysql.query("DELETE FROM inventory WHERE product_id IN (?)", [productIds]);
   }
 
   if (productIds.length > 0) {
@@ -93,6 +106,32 @@ async function createFixture({ suffix, priceCents = 700, stock = 2, reserved = 0
   return {
     product_id: productResult.insertId,
     machine_id: machineResult.insertId,
+    slot_id: slotResult.insertId,
+    inventory_id: inventoryResult.insertId,
+  };
+}
+
+async function createPhysicalMachineIncompatibleFixture({ suffix, priceCents = 700, stock = 2 }) {
+  const [productResult] = await mysql.query(
+    `INSERT INTO products (sku, name, category, price_cents, is_active)
+     VALUES (?, ?, ?, ?, 1)`,
+    [`${skuPrefix}-${suffix}`, `Produto Fisico ${suffix}`, "Checkout", priceCents],
+  );
+  const [slotResult] = await mysql.query(
+    `INSERT INTO slots (machine_id, code, motor_id, sensor_column_id, is_enabled)
+     VALUES (1, ?, 99, 99, 1)`,
+    [`${slotCodePrefix}-${suffix}`],
+  );
+  const [inventoryResult] = await mysql.query(
+    `INSERT INTO inventory
+      (machine_id, slot_id, product_id, quantity_available, quantity_reserved, min_quantity_alert)
+     VALUES (1, ?, ?, ?, 0, 0)`,
+    [slotResult.insertId, productResult.insertId, stock],
+  );
+
+  return {
+    product_id: productResult.insertId,
+    machine_id: 1,
     slot_id: slotResult.insertId,
     inventory_id: inventoryResult.insertId,
   };
@@ -321,6 +360,40 @@ describe("sales checkout routes", () => {
       .expect(409);
 
     expect(response.body.error.code).toBe("MACHINE_NOT_AVAILABLE");
+  });
+
+  test("blocks checkout for physical machine slot unsupported by ESP before side effects", async () => {
+    const fixture = await createPhysicalMachineIncompatibleFixture({
+      suffix: "BADHW",
+      priceCents: 600,
+      stock: 2,
+    });
+    await setWalletBalance(auth.user.id, 5000);
+    const walletBefore = await getWallet(auth.user.id);
+    const inventoryBefore = await getInventory(fixture.inventory_id);
+    const salesBefore = (await getSaleRows(auth.user.id)).length;
+
+    const response = await request(app)
+      .post("/api/sales/checkout")
+      .set("Authorization", `Bearer ${auth.token}`)
+      .send({
+        machine_id: fixture.machine_id,
+        slot_id: fixture.slot_id,
+        product_id: fixture.product_id,
+      })
+      .expect(409);
+
+    const walletAfter = await getWallet(auth.user.id);
+    const inventoryAfter = await getInventory(fixture.inventory_id);
+    const salesAfter = (await getSaleRows(auth.user.id)).length;
+    const commands = await getDispenseCommands(salesAfter > salesBefore ? saleId : 0);
+
+    expect(response.body.error.code).toBe("SLOT_HARDWARE_NOT_SUPPORTED");
+    expect(walletAfter.balance_cents).toBe(walletBefore.balance_cents);
+    expect(inventoryAfter.quantity_available).toBe(inventoryBefore.quantity_available);
+    expect(inventoryAfter.quantity_reserved).toBe(inventoryBefore.quantity_reserved);
+    expect(salesAfter).toBe(salesBefore);
+    expect(commands).toHaveLength(0);
   });
 
   test("lists sales, gets sale by id and purchase history", async () => {

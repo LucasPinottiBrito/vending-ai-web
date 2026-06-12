@@ -6,12 +6,12 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
+  ShoppingBasket,
   ShoppingBag,
   User,
   Wallet,
 } from "lucide-react";
 
-import { BackendStatus } from "@/components/layout/BackendStatus";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -33,7 +33,7 @@ import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/", label: "Inicio" },
-  { href: "/m/hall-principal", label: "Catalogo" },
+  { href: "/catalogo", label: "Comprar" },
   { href: "/account", label: "Conta" },
   { href: "/admin", label: "Admin" },
 ];
@@ -102,10 +102,6 @@ export function AppHeader() {
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="hidden sm:block">
-            <BackendStatus />
-          </div>
-
           {isAuthenticated ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -146,9 +142,18 @@ export function AppHeader() {
             </DropdownMenu>
           ) : (
             <Button asChild size="sm">
-              <Link href="/login">Entrar</Link>
+              <Link href="/login">
+                <User data-icon="inline-start" />
+                Entrar
+              </Link>
             </Button>
           )}
+          <Button asChild size="sm" variant="outline" className="hidden sm:inline-flex">
+            <Link href="/catalogo">
+              <ShoppingBasket data-icon="inline-start" />
+              Comprar
+            </Link>
+          </Button>
         </div>
       </div>
     </header>

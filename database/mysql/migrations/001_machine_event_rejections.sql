@@ -1,0 +1,26 @@
+USE vending_machine;
+
+ALTER TABLE machine_events
+  DROP CHECK chk_machine_events_event_type;
+
+ALTER TABLE machine_events
+  ADD CONSTRAINT chk_machine_events_event_type CHECK (event_type IN (
+    'HEARTBEAT',
+    'DISPENSE_STARTED',
+    'SENSOR_TRIGGERED',
+    'DISPENSE_RETRY',
+    'DISPENSE_SUCCESS',
+    'DISPENSE_FAILED',
+    'MOTOR_ERROR',
+    'MACHINE_ERROR',
+    'INVALID_JSON',
+    'UNKNOWN_COMMAND_TYPE',
+    'INVALID_COMMAND',
+    'MACHINE_BUSY',
+    'UNKNOWN_MOTOR_ID',
+    'UNKNOWN_SENSOR_COLUMN_ID',
+    'UNSUPPORTED_QUANTITY',
+    'COMMAND_DUPLICATED',
+    'PRODUCT_NOT_DETECTED',
+    'INTERNAL_ERROR'
+  ));

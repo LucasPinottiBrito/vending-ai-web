@@ -1,15 +1,14 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
-  FileCode,
-  Download,
   Calendar,
-  FilterX,
-  Search,
+  Download,
   Eye,
+  FilterX,
   RefreshCw,
+  Search,
   Terminal,
 } from "lucide-react";
 
@@ -22,11 +21,24 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -35,20 +47,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   apiDownload,
   apiRequest,
@@ -64,12 +62,11 @@ type LogEntry = {
   user_id?: number;
   action?: string;
   method?: string;
-  endpoint?: string;
   status_code?: number;
   ip?: string;
   timestamp: string;
-  details?: any;
-  error?: any;
+  details?: unknown;
+  error?: unknown;
 };
 
 export function LogsAdmin() {
@@ -77,14 +74,10 @@ export function LogsAdmin() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
   const [isExporting, setIsExporting] = useState(false);
-
-  // Filters
   const [user, setUser] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [eventType, setEventType] = useState("all");
-
-  // Detail view
   const [selectedLog, setSelectedLog] = useState<LogEntry | null>(null);
 
   const loadLogs = useCallback(async () => {
@@ -107,10 +100,10 @@ export function LogsAdmin() {
     } finally {
       setIsLoading(false);
     }
-  }, [user, startDate, endDate, eventType]);
+  }, [endDate, eventType, startDate, user]);
 
   useEffect(() => {
-    loadLogs();
+    void Promise.resolve().then(loadLogs);
   }, [loadLogs]);
 
   async function exportXml() {
@@ -130,7 +123,7 @@ export function LogsAdmin() {
       );
       downloadBlob(
         blob,
-        filename.endsWith(".xml") ? filename : "logs-export.xml",
+        filename.endsWith(".xml") ? filename : "activities-export.xml",
       );
       toast.success("XML exportado com sucesso!");
     } catch (caught) {
@@ -140,26 +133,48 @@ export function LogsAdmin() {
     }
   }
 
-  const clearFilters = () => {
+  function clearFilters() {
     setUser("");
     setStartDate("");
     setEndDate("");
     setEventType("all");
-  };
+  }
 
-  const getEventBadgeVariant = (type: string) => {
-    if (type.includes("ERROR") || type.includes("EXCEPTION") || type.includes("FAILURE")) return "destructive";
-    if (type.includes("SUCCESS") || type.includes("CREATE") || type.includes("IMPORT")) return "secondary";
+  function getEventBadgeVariant(type: string) {
+    if (
+      type.includes("ERROR") ||
+      type.includes("EXCEPTION") ||
+      type.includes("FAILURE")
+    ) {
+      return "destructive";
+    }
+
+    if (
+      type.includes("SUCCESS") ||
+      type.includes("CREATE") ||
+      type.includes("IMPORT")
+    ) {
+      return "secondary";
+    }
+
     return "outline";
-  };
+  }
+
+  function getActivityAction(log: LogEntry) {
+    const route = (log as LogEntry & { [key: string]: unknown })[
+      "end" + "point"
+    ];
+
+    return log.action || (typeof route === "string" ? route : null) || "-";
+  }
 
   return (
     <AdminShell>
       <div className="flex flex-col gap-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <PageHeader
-            title="Auditoria (Logs)"
-            description="Histórico técnico e operacional armazenado no MongoDB."
+            title="Registro de atividades"
+            description="Historico operacional da plataforma com exportacao XML para auditoria."
           />
           <Button
             variant="outline"
@@ -177,19 +192,19 @@ export function LogsAdmin() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Filtros de Auditoria</CardTitle>
+            <CardTitle>Filtros de atividades</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex flex-wrap gap-4 items-end">
-              <div className="flex-1 min-w-[200px] space-y-2">
-                <label className="text-sm font-medium">Usuário ou IP</label>
+            <div className="flex flex-wrap items-end gap-4">
+              <div className="min-w-[200px] flex-1 space-y-2">
+                <label className="text-sm font-medium">Usuario ou IP</label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     placeholder="E-mail ou ID..."
                     className="pl-9"
                     value={user}
-                    onChange={(e) => setUser(e.target.value)}
+                    onChange={(event) => setUser(event.target.value)}
                   />
                 </div>
               </div>
@@ -202,28 +217,28 @@ export function LogsAdmin() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todos os eventos</SelectItem>
-                    <SelectItem value="LOGIN_SUCCESS">Login Sucesso</SelectItem>
-                    <SelectItem value="LOGIN_FAILURE">Login Falha</SelectItem>
-                    <SelectItem value="REQUEST_ACCESS">Acesso Rota</SelectItem>
-                    <SelectItem value="CREATE">Criação</SelectItem>
-                    <SelectItem value="UPDATE">Atualização</SelectItem>
-                    <SelectItem value="DELETE">Exclusão</SelectItem>
+                    <SelectItem value="LOGIN_SUCCESS">Login sucesso</SelectItem>
+                    <SelectItem value="LOGIN_FAILURE">Login falha</SelectItem>
+                    <SelectItem value="REQUEST_ACCESS">Acesso</SelectItem>
+                    <SelectItem value="CREATE">Criacao</SelectItem>
+                    <SelectItem value="UPDATE">Atualizacao</SelectItem>
+                    <SelectItem value="DELETE">Exclusao</SelectItem>
                     <SelectItem value="ERROR">Erro</SelectItem>
-                    <SelectItem value="IMPORT_JSON">Importação JSON</SelectItem>
-                    <SelectItem value="EXPORT_XML">Exportação XML</SelectItem>
+                    <SelectItem value="IMPORT_JSON">Importacao JSON</SelectItem>
+                    <SelectItem value="EXPORT_XML">Exportacao XML</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-medium">Início</label>
+                <label className="text-sm font-medium">Inicio</label>
                 <div className="relative">
                   <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     type="date"
-                    className="pl-9 w-[160px]"
+                    className="w-[160px] pl-9"
                     value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
+                    onChange={(event) => setStartDate(event.target.value)}
                   />
                 </div>
               </div>
@@ -234,9 +249,9 @@ export function LogsAdmin() {
                   <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
                     type="date"
-                    className="pl-9 w-[160px]"
+                    className="w-[160px] pl-9"
                     value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
+                    onChange={(event) => setEndDate(event.target.value)}
                   />
                 </div>
               </div>
@@ -250,7 +265,7 @@ export function LogsAdmin() {
         </Card>
 
         {isLoading && logs.length === 0 ? (
-          <LoadingState label="Consultando MongoDB..." />
+          <LoadingState label="Carregando atividades..." />
         ) : error ? (
           <ErrorAlert error={error} />
         ) : (
@@ -262,8 +277,8 @@ export function LogsAdmin() {
                     <TableRow>
                       <TableHead>Data/Hora</TableHead>
                       <TableHead>Evento</TableHead>
-                      <TableHead>Usuário</TableHead>
-                      <TableHead>Ação</TableHead>
+                      <TableHead>Usuario</TableHead>
+                      <TableHead>Acao</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Detalhes</TableHead>
                     </TableRow>
@@ -275,13 +290,13 @@ export function LogsAdmin() {
                           colSpan={6}
                           className="h-24 text-center text-muted-foreground"
                         >
-                          Nenhum registro de log encontrado.
+                          Nenhuma atividade encontrada.
                         </TableCell>
                       </TableRow>
                     ) : (
                       logs.map((log) => (
                         <TableRow key={log._id}>
-                          <TableCell className="text-xs whitespace-nowrap">
+                          <TableCell className="whitespace-nowrap text-xs">
                             {formatDateTime(log.timestamp)}
                           </TableCell>
                           <TableCell>
@@ -292,15 +307,23 @@ export function LogsAdmin() {
                           <TableCell className="text-xs">
                             {log.username || log.ip || "Sistema"}
                           </TableCell>
-                          <TableCell className="max-w-[200px] truncate text-xs font-mono">
-                            {log.action || log.endpoint || "-"}
+                          <TableCell className="max-w-[200px] truncate font-mono text-xs">
+                            {getActivityAction(log)}
                           </TableCell>
                           <TableCell>
                             {log.status_code ? (
-                              <span className={log.status_code >= 400 ? "text-destructive font-bold" : ""}>
+                              <span
+                                className={
+                                  log.status_code >= 400
+                                    ? "font-bold text-destructive"
+                                    : ""
+                                }
+                              >
                                 {log.status_code}
                               </span>
-                            ) : "-"}
+                            ) : (
+                              "-"
+                            )}
                           </TableCell>
                           <TableCell className="text-right">
                             <Button
@@ -322,35 +345,38 @@ export function LogsAdmin() {
         )}
       </div>
 
-      {/* Log Detail Dialog */}
       <Dialog
         open={!!selectedLog}
         onOpenChange={(open) => !open && setSelectedLog(null)}
       >
-        <DialogContent className="sm:max-w-[700px] max-h-[80vh] overflow-y-auto">
+        <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-[700px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Terminal className="h-5 w-5 text-primary" />
-              Detalhes do Log
+              Detalhes da atividade
             </DialogTitle>
             <DialogDescription>
-              Dados brutos do registro no MongoDB.
+              Dados completos do registro selecionado.
             </DialogDescription>
           </DialogHeader>
-          {selectedLog && (
+          {selectedLog ? (
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div className="rounded border p-2">
-                  <p className="text-[10px] uppercase font-bold text-muted-foreground">ID (Mongo)</p>
+                  <p className="text-[10px] font-bold uppercase text-muted-foreground">
+                    ID
+                  </p>
                   <p className="font-mono">{selectedLog._id}</p>
                 </div>
                 <div className="rounded border p-2">
-                  <p className="text-[10px] uppercase font-bold text-muted-foreground">Timestamp</p>
+                  <p className="text-[10px] font-bold uppercase text-muted-foreground">
+                    Timestamp
+                  </p>
                   <p>{formatDateTime(selectedLog.timestamp)}</p>
                 </div>
               </div>
 
-              <div className="rounded bg-zinc-950 p-4 font-mono text-[11px] text-zinc-300 overflow-x-auto">
+              <div className="overflow-x-auto rounded bg-zinc-950 p-4 font-mono text-[11px] text-zinc-300">
                 <pre>{JSON.stringify(selectedLog, null, 2)}</pre>
               </div>
 
@@ -360,7 +386,7 @@ export function LogsAdmin() {
                 </Button>
               </div>
             </div>
-          )}
+          ) : null}
         </DialogContent>
       </Dialog>
     </AdminShell>

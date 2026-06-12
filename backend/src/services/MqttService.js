@@ -1,5 +1,6 @@
 const env = require("../config/env");
 const { getMqttClient } = require("../config/mqtt");
+const { buildEsp32DispensePayload } = require("../utils/esp32Command");
 
 function createMqttError(message, code = "MQTT_PUBLISH_FAILED") {
   const error = new Error(message);
@@ -77,7 +78,7 @@ class MqttService {
       return { topic, payload, skipped: true, reason: "MQTT client unavailable" };
     }
 
-    const options = { qos: 1 };
+    const options = { qos: 1, retain: false };
 
     if (client.connected === false) {
       throw createMqttError("MQTT client is not connected", "MQTT_NOT_CONNECTED");
@@ -102,21 +103,7 @@ class MqttService {
 
   async publishDispenseCommand(command) {
     const topic = command.mqtt_topic || `vending/${command.machine_id}/actions`;
-    const storedPayload = command.payload_json || {};
-    const payload = {
-      type: "DISPENSE",
-      command_id: command.id,
-      sale_id: command.sale_id,
-      machine_id: command.machine_id,
-      product_id: command.product_id,
-      slot_id: command.slot_id,
-      slot_code: command.slot_code || storedPayload.slot_code || null,
-      motor_id: command.motor_id,
-      sensor_column_id: command.sensor_column_id,
-      quantity: storedPayload.quantity || command.quantity || 1,
-      attempts_allowed: command.attempts_allowed || storedPayload.attempts_allowed || 2,
-      timeout_ms_per_attempt: storedPayload.timeout_ms_per_attempt || 10000,
-    };
+    const payload = buildEsp32DispensePayload(command);
 
     return this.publish(topic, payload);
   }

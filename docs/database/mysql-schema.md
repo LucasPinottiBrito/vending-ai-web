@@ -118,7 +118,7 @@ Registra eventos operacionais da maquina, como heartbeat e resultado de dispensa
 
 - PK: `id`
 - FKs: `machine_id -> machines.id`, `sale_id -> sales.id`, `dispense_command_id -> dispense_commands.id`
-- Tipos: `HEARTBEAT`, `DISPENSE_STARTED`, `SENSOR_TRIGGERED`, `DISPENSE_RETRY`, `DISPENSE_SUCCESS`, `DISPENSE_FAILED`, `MOTOR_ERROR`, `MACHINE_ERROR`
+- Tipos: `HEARTBEAT`, `DISPENSE_STARTED`, `SENSOR_TRIGGERED`, `DISPENSE_RETRY`, `DISPENSE_SUCCESS`, `DISPENSE_FAILED`, `MOTOR_ERROR`, `MACHINE_ERROR`, `INVALID_JSON`, `UNKNOWN_COMMAND_TYPE`, `INVALID_COMMAND`, `MACHINE_BUSY`, `UNKNOWN_MOTOR_ID`, `UNKNOWN_SENSOR_COLUMN_ID`, `UNSUPPORTED_QUANTITY`, `COMMAND_DUPLICATED`, `PRODUCT_NOT_DETECTED`, `INTERNAL_ERROR`
 
 ## Relacionamentos 1:N
 

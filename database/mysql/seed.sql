@@ -95,8 +95,10 @@ INSERT INTO slots (
 ) VALUES
   (1, 1, 'A1', 1, 1, 1, '2026-06-01 10:05:00', '2026-06-01 10:05:00'),
   (2, 1, 'A2', 2, 2, 1, '2026-06-01 10:06:00', '2026-06-01 10:06:00'),
-  (3, 1, 'B1', 3, 3, 1, '2026-06-01 10:07:00', '2026-06-01 10:07:00'),
-  (4, 1, 'B2', 4, 4, 1, '2026-06-01 10:08:00', '2026-06-01 10:08:00');
+  -- A ESP32-S3 fisica atual da maquina 1 aceita venda apenas nos pares motor/sensor 1/1 e 2/2.
+  -- Slots extras ficam cadastrados para administracao e historico, mas desabilitados para venda.
+  (3, 1, 'B1', 3, 3, 0, '2026-06-01 10:07:00', '2026-06-01 10:07:00'),
+  (4, 1, 'B2', 4, 4, 0, '2026-06-01 10:08:00', '2026-06-01 10:08:00');
 
 INSERT INTO products (
   id,

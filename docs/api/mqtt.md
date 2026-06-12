@@ -47,9 +47,19 @@ Payload:
   "sensor_column_id": 1,
   "quantity": 1,
   "attempts_allowed": 2,
-  "timeout_ms_per_attempt": 10000
+  "timeout_ms_per_attempt": 10000,
+  "issued_at": "2026-06-08T12:00:00.000Z"
 }
 ```
+
+Regras de publicacao:
+
+- `qos: 1`;
+- `retain: false`;
+- payload JSON menor que `1024` bytes;
+- `command_id` numerico igual a `dispense_commands.id`;
+- sem campo `expires_at` no payload publicado;
+- para a ESP fisica atual da maquina `1`, somente `motor_id=1/sensor_column_id=1` e `motor_id=2/sensor_column_id=2`.
 
 Ao publicar ou enfileirar a publicacao no cliente `mqtt.js`, o backend atualiza `dispense_commands.status` para `PUBLISHED`. Se a conexao com o broker ainda estiver sendo estabelecida, a chamada HTTP nao fica bloqueada aguardando indefinidamente o callback do broker.
 
@@ -66,6 +76,16 @@ DISPENSE_SUCCESS
 DISPENSE_FAILED
 MOTOR_ERROR
 MACHINE_ERROR
+INVALID_JSON
+UNKNOWN_COMMAND_TYPE
+INVALID_COMMAND
+MACHINE_BUSY
+UNKNOWN_MOTOR_ID
+UNKNOWN_SENSOR_COLUMN_ID
+UNSUPPORTED_QUANTITY
+COMMAND_DUPLICATED
+PRODUCT_NOT_DETECTED
+INTERNAL_ERROR
 ```
 
 Payload minimo recomendado:
@@ -114,6 +134,17 @@ Efeito idempotente:
 
 Se o mesmo sucesso chegar novamente, o backend registra o evento, mas nao baixa estoque de novo.
 
+## SENSOR_TRIGGERED
+
+Quando o evento informa `command_id` ou `sale_id`, ele tambem e tratado como confirmacao fisica de queda do produto:
+
+- comando vira `SUCCESS`;
+- venda vira `DISPENSED`;
+- `inventory.quantity_available` diminui;
+- `inventory.quantity_reserved` diminui.
+
+Se a ESP tambem enviar `DISPENSE_SUCCESS` depois, o processamento continua idempotente e nao baixa estoque novamente.
+
 ## DISPENSE_FAILED
 
 Efeito idempotente:
@@ -127,6 +158,12 @@ Efeito idempotente:
 - registra evento em MySQL e logs no MongoDB.
 
 Se a mesma falha chegar novamente, o backend registra o evento, mas nao duplica estorno.
+
+## Rejeicoes da ESP32-S3
+
+Eventos de rejeicao como `INVALID_COMMAND`, `UNKNOWN_MOTOR_ID`, `UNSUPPORTED_QUANTITY`, `MACHINE_BUSY` e `PRODUCT_NOT_DETECTED` sao registrados em `machine_events`.
+
+Quando a rejeicao informa `command_id` ou `sale_id`, o backend trata como falha terminal de dispensacao: comando `FAILED`, venda `FAILED -> REFUNDED`, reserva liberada e wallet estornada de forma idempotente. Quando a rejeicao nao identifica comando ou venda, o backend apenas registra o evento/log para diagnostico.
 
 ## Logs
 
