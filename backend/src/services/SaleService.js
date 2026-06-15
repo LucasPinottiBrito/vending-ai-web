@@ -375,7 +375,7 @@ class SaleService extends IService {
       sensor_column_id: inventory.sensor_column_id,
       quantity: 1,
       attempts_allowed: 2,
-      timeout_ms_per_attempt: 10000,
+      timeout_ms_per_attempt: 30000,
       issued_at: issuedAt.toISOString(),
       expires_at: expiresAt.toISOString(),
     };
