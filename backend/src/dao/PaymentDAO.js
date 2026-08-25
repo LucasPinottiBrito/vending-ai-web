@@ -42,23 +42,45 @@ class PaymentDAO extends IDAO {
     const where = [];
     const params = [];
 
+    if (filters.search) {
+      where.push("(u.name LIKE ? OR u.email LIKE ? OR p.provider_payment_id LIKE ?)");
+      params.push(`%${filters.search}%`, `%${filters.search}%`, `%${filters.search}%`);
+    }
+
     if (filters.user_id) {
-      where.push("user_id = ?");
+      where.push("p.user_id = ?");
       params.push(filters.user_id);
     }
 
-    if (filters.status) {
-      where.push("status = ?");
+    if (filters.status && filters.status !== "all") {
+      where.push("p.status = ?");
       params.push(filters.status);
+    }
+
+    if (filters.type && filters.type !== "all") {
+      where.push("p.type = ?");
+      params.push(filters.type);
+    }
+
+    if (filters.start_date) {
+      where.push("p.created_at >= ?");
+      params.push(filters.start_date);
+    }
+
+    if (filters.end_date) {
+      where.push("p.created_at <= ?");
+      params.push(filters.end_date);
     }
 
     const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";
     const [rows] = await mysql.query(
-      `SELECT id, user_id, type, provider, provider_payment_id, amount_cents, status,
-              mock_qr_code, mock_copy_paste, expires_at, paid_at, created_at, updated_at
-       FROM payments
+      `SELECT p.id, p.user_id, p.type, p.provider, p.provider_payment_id, p.amount_cents, p.status,
+              p.mock_qr_code, p.mock_copy_paste, p.expires_at, p.paid_at, p.created_at, p.updated_at,
+              u.name AS user_name, u.email AS user_email
+       FROM payments p
+       INNER JOIN users u ON u.id = p.user_id
        ${whereSql}
-       ORDER BY created_at DESC, id DESC
+       ORDER BY p.created_at DESC, p.id DESC
        LIMIT ?`,
       [...params, Number(filters.limit || 100)],
     );

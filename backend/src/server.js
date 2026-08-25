@@ -11,7 +11,15 @@ async function bootstrap() {
   await mongodb.ensureLogIndexes();
 
   const mqttService = new MqttService();
-  await mqttService.start(new MachineEventService());
+  const machineEventService = new MachineEventService();
+  await mqttService.start(machineEventService);
+
+  const offlineInterval = setInterval(() => {
+    machineEventService.markOfflineMachines().catch((error) => {
+      console.error("[machine-status] failed to mark stale machines offline", error.message);
+    });
+  }, 15 * 1000);
+  offlineInterval.unref?.();
 
   app.listen(env.port, "0.0.0.0", () => {
     console.log(`Backend listening on port ${env.port}`);

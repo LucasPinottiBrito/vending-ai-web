@@ -4,6 +4,7 @@ import { MapPin, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MachineStatusBadge } from "./MachineStatusBadge";
+import { formatDateTime } from "@/lib/formatters";
 
 export type MachineListItem = {
   id: number;
@@ -12,9 +13,13 @@ export type MachineListItem = {
   location?: string | null;
   status?: string;
   is_active?: boolean | number;
+  can_sell?: boolean;
+  last_seen_at?: string | null;
 };
 
 export function MachineCard({ machine }: { machine: MachineListItem }) {
+  const canSell = Boolean(machine.can_sell);
+
   return (
     <Card className="h-full">
       <CardHeader className="gap-3">
@@ -26,19 +31,33 @@ export function MachineCard({ machine }: { machine: MachineListItem }) {
               <span>{machine.location || "Localizacao nao informada"}</span>
             </div>
           </div>
-          <MachineStatusBadge />
+          <MachineStatusBadge status={machine.status} canSell={canSell} />
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <p className="text-sm leading-6 text-muted-foreground">
-          Produtos disponiveis para consulta e compra nesta vending machine.
+          {canSell
+            ? "Produtos disponiveis para consulta e compra nesta vending machine."
+            : "Esta maquina nao recebeu heartbeat no ultimo minuto e nao pode vender agora."}
         </p>
-        <Button asChild className="w-full">
-          <Link href={`/m/${machine.slug}`}>
+        {machine.last_seen_at ? (
+          <p className="text-xs text-muted-foreground">
+            Ultimo heartbeat: {formatDateTime(machine.last_seen_at)}
+          </p>
+        ) : null}
+        {canSell ? (
+          <Button asChild className="w-full">
+            <Link href={`/m/${machine.slug}`}>
+              <ShoppingBag data-icon="inline-start" />
+              Comprar nesta maquina
+            </Link>
+          </Button>
+        ) : (
+          <Button className="w-full" disabled>
             <ShoppingBag data-icon="inline-start" />
-            Comprar nesta maquina
-          </Link>
-        </Button>
+            Compra indisponivel
+          </Button>
+        )}
       </CardContent>
     </Card>
   );

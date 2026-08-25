@@ -133,6 +133,7 @@ async function createCheckoutFixture({ suffix, auth, adminToken, amountCents = 1
       name: `MQTT Machine ${suffix}`,
       location: "Lab MQTT",
       status: "ONLINE",
+      last_seen_at: new Date().toISOString(),
       slots: [{ code: `M${suffix}`, motor_id: 100 + suffix.length + Math.floor(Math.random() * 1000), sensor_column_id: 200 + suffix.length + Math.floor(Math.random() * 1000) }],
     })
     .expect(201);

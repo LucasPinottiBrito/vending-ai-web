@@ -23,6 +23,8 @@ export type CatalogMachine = {
   location?: string;
   status: string;
   can_sell: boolean;
+  last_seen_at?: string | null;
+  heartbeat_fresh?: boolean;
 };
 
 export type CatalogItem = {
@@ -108,6 +110,11 @@ export function CatalogClient({ slug }: { slug: string }) {
       return;
     }
 
+    if (!data.machine.can_sell) {
+      toast.error("Maquina offline. Aguarde um novo heartbeat para comprar.");
+      return;
+    }
+
     setProcessingSlot(item.slot_id);
 
     try {
@@ -149,16 +156,14 @@ export function CatalogClient({ slug }: { slug: string }) {
     return <EmptyState message="Maquina nao encontrada." />;
   }
 
-  // Demo mode: until ESP32-S3 heartbeat is fully integrated, catalog displays machines as online.
-  const demoCanSell = true;
-
   return (
     <div className="flex flex-col gap-6">
       <MachineHeader
         name={data.machine.name || "Maquina"}
         location={data.machine.location || data.machine.slug}
-        status="ONLINE"
-        canSell={demoCanSell}
+        status={data.machine.status}
+        canSell={data.machine.can_sell}
+        lastSeenAt={data.machine.last_seen_at}
       />
 
       <Card>
@@ -180,7 +185,7 @@ export function CatalogClient({ slug }: { slug: string }) {
           items={filteredItems}
           slug={slug}
           processingSlot={processingSlot}
-          canSell={demoCanSell}
+          canSell={data.machine.can_sell}
           onCheckout={checkout}
         />
       ) : (

@@ -88,6 +88,11 @@ export function CheckoutClient({
       return;
     }
 
+    if (!machine.can_sell) {
+      toast.error("Maquina offline. Aguarde um novo heartbeat para comprar.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -145,8 +150,7 @@ export function CheckoutClient({
   }
 
   const hasBalance = balance === null || balance >= item.price_cents;
-  // Demo mode: until ESP32-S3 heartbeat is fully integrated, catalog displays machines as online.
-  const isMachineOnline = true;
+  const isMachineOnline = machine.can_sell;
 
   return (
     <div className="flex flex-col gap-6">
@@ -180,6 +184,17 @@ export function CheckoutClient({
                 <Button asChild size="sm" variant="outline" className="w-fit">
                   <Link href="/account/wallet/topup">Recarregar agora</Link>
                 </Button>
+              </AlertDescription>
+            </Alert>
+          ) : null}
+
+          {!isMachineOnline ? (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Maquina offline</AlertTitle>
+              <AlertDescription>
+                A maquina nao recebeu heartbeat no ultimo minuto. A compra sera
+                liberada quando a conexao MQTT voltar.
               </AlertDescription>
             </Alert>
           ) : null}

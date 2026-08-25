@@ -1,16 +1,19 @@
-import { CircleCheck } from "lucide-react";
+import { CircleCheck, CircleX } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 
 type MachineStatusBadgeProps = {
-  label?: string;
+  status?: string;
+  canSell?: boolean;
 };
 
-export function MachineStatusBadge({ label = "Online" }: MachineStatusBadgeProps) {
+export function MachineStatusBadge({ status = "OFFLINE", canSell = false }: MachineStatusBadgeProps) {
+  const Icon = canSell ? CircleCheck : CircleX;
+
   return (
-    <Badge variant="secondary" className="w-fit">
-      <CircleCheck data-icon="inline-start" />
-      {label}
+    <Badge variant={canSell ? "secondary" : "destructive"} className="w-fit">
+      <Icon data-icon="inline-start" />
+      {canSell ? "Online" : status === "ONLINE" ? "Sem heartbeat" : "Offline"}
     </Badge>
   );
 }

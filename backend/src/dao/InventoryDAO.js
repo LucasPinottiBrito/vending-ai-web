@@ -8,7 +8,7 @@ const inventorySelect = `
     s.code AS slot_code, s.motor_id, s.sensor_column_id,
     p.sku AS product_sku, p.name AS product_name, p.category AS product_category,
     p.price_cents, p.image_path,
-    m.slug AS machine_slug, m.status AS machine_status
+    m.slug AS machine_slug, m.status AS machine_status, m.last_seen_at AS machine_last_seen_at
   FROM inventory i
   INNER JOIN slots s ON s.id = i.slot_id
   INNER JOIN products p ON p.id = i.product_id
@@ -23,6 +23,7 @@ const checkoutInventorySelect = `
     p.sku AS product_sku, p.name AS product_name, p.category AS product_category,
     p.price_cents, p.image_path, p.is_active AS product_is_active,
     m.slug AS machine_slug, m.name AS machine_name, m.status AS machine_status,
+    m.last_seen_at AS machine_last_seen_at,
     m.is_active AS machine_is_active
   FROM inventory i
   INNER JOIN slots s ON s.id = i.slot_id

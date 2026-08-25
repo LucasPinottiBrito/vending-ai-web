@@ -128,6 +128,7 @@ describe("machines, slots and inventory routes", () => {
         name: "Maquina Teste",
         location: "Bloco A",
         status: "ONLINE",
+        last_seen_at: new Date().toISOString(),
         slots: [
           { code: "A1", motor_id: 1, sensor_column_id: 1 },
           { code: "A2", motor_id: 2, sensor_column_id: 2 },
@@ -382,6 +383,25 @@ describe("machines, slots and inventory routes", () => {
         }),
       ]),
     );
+  });
+
+  test("marks catalog machine as not sellable when heartbeat is stale", async () => {
+    await mysql.query(
+      "UPDATE machines SET status = 'ONLINE', last_seen_at = ? WHERE id = ?",
+      [new Date(Date.now() - 61_000), machine.id],
+    );
+
+    const response = await request(app)
+      .get(`/api/machines/slug/${machine.slug}/catalog`)
+      .expect(200);
+
+    expect(response.body.data.machine).toMatchObject({
+      id: machine.id,
+      slug: machine.slug,
+      status: "ONLINE",
+      can_sell: false,
+      heartbeat_fresh: false,
+    });
   });
 
   test("records MongoDB logs for machine, slot and inventory changes", async () => {

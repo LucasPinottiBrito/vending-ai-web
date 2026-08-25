@@ -15,6 +15,8 @@ import {
   TrendingUp,
   AlertTriangle,
   Activity,
+  Users,
+  WalletCards,
 } from "lucide-react";
 
 import { AdminShell } from "@/components/layout/AdminShell";
@@ -64,6 +66,18 @@ const navigationCards = [
     title: "Vendas",
     description: "Histórico e status de vendas.",
     icon: Receipt,
+  },
+  {
+    href: "/admin/users",
+    title: "Usuarios",
+    description: "Perfis e acessos da plataforma.",
+    icon: Users,
+  },
+  {
+    href: "/admin/payments",
+    title: "Pagamentos",
+    description: "Recargas mock e status de pagamento.",
+    icon: WalletCards,
   },
   {
     href: "/admin/reports",

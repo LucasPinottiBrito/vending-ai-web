@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
-import { CatalogItem } from "@/components/catalog/CatalogClient";
+import { CatalogItem, CatalogMachine } from "@/components/catalog/CatalogClient";
 import { ProductImage } from "@/components/catalog/ProductImage";
 import { ErrorAlert } from "@/components/feedback/ErrorAlert";
 import { LoadingState } from "@/components/feedback/LoadingState";
@@ -26,17 +26,19 @@ export function ProductDetailClient({
   productId: string;
 }) {
   const [item, setItem] = useState<CatalogItem | null>(null);
+  const [machine, setMachine] = useState<CatalogMachine | null>(null);
   const [error, setError] = useState<unknown>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    apiRequest<{ items: CatalogItem[] }>(`/api/machines/slug/${slug}/catalog`, {
+    apiRequest<{ machine: CatalogMachine; items: CatalogItem[] }>(`/api/machines/slug/${slug}/catalog`, {
       token: null,
     })
       .then((response) => {
         const found = response.data.items.find(
           (candidate) => Number(candidate.product_id) === Number(productId),
         );
+        setMachine(response.data.machine);
         setItem(found ?? null);
       })
       .catch(setError)
@@ -98,14 +100,16 @@ export function ProductDetailClient({
               <dd className="font-medium">{item.slot_code}</dd>
             </div>
           </dl>
-          {item.available_for_sale > 0 ? (
+          {item.available_for_sale > 0 && machine?.can_sell ? (
             <Button asChild>
               <Link href={`/m/${slug}/checkout/${item.slot_id}`}>
                 Continuar compra
               </Link>
             </Button>
           ) : (
-            <Button disabled>Indisponivel</Button>
+            <Button disabled>
+              {machine?.can_sell === false ? "Maquina offline" : "Indisponivel"}
+            </Button>
           )}
         </div>
       </CardContent>

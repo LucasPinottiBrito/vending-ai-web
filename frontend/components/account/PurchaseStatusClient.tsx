@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { CheckCircle, Info, Package } from "lucide-react";
 import Link from "next/link";
 
@@ -46,6 +47,7 @@ type SaleDetail = {
 const FINAL_STATES = ["DISPENSED", "FAILED", "REFUNDED"];
 
 export function PurchaseStatusClient({ id }: { id: string }) {
+  const router = useRouter();
   const [data, setData] = useState<SaleDetail | null>(null);
   const [error, setError] = useState<unknown>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -88,6 +90,18 @@ export function PurchaseStatusClient({ id }: { id: string }) {
     };
   }, [fetchStatus]);
 
+  useEffect(() => {
+    if (data?.sale.status !== "DISPENSED") {
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      router.push("/account/purchases");
+    }, 3000);
+
+    return () => clearTimeout(timeoutId);
+  }, [data?.sale.status, router]);
+
   if (isLoading && !data) {
     return (
       <RouteGuard>
@@ -119,6 +133,8 @@ export function PurchaseStatusClient({ id }: { id: string }) {
   const isFailed = sale.status === "FAILED" || sale.status === "REFUNDED";
   const isAwaitingCommandPublish =
     sale.status === "AUTHORIZED" && dispenseCommand?.status === "PENDING";
+  const timelineStatus =
+    sale.status === "AUTHORIZED" && dispenseCommand ? "DISPENSING" : sale.status;
 
   return (
     <RouteGuard>
@@ -137,7 +153,7 @@ export function PurchaseStatusClient({ id }: { id: string }) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <PurchaseStatusTimeline currentStatus={sale.status} />
+            <PurchaseStatusTimeline currentStatus={timelineStatus} />
 
             {isAwaitingCommandPublish && (
               <Alert>
@@ -155,7 +171,8 @@ export function PurchaseStatusClient({ id }: { id: string }) {
                 <CheckCircle className="h-4 w-4 text-primary" />
                 <AlertTitle className="text-primary font-bold">Produto Liberado!</AlertTitle>
                 <AlertDescription>
-                  Por favor, retire seu produto no bocal da máquina. Obrigado pela compra!
+                  Por favor, retire seu produto no bocal da maquina. Voce sera
+                  redirecionado para suas compras em instantes.
                 </AlertDescription>
               </Alert>
             )}

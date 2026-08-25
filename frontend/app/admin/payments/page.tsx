@@ -1,10 +1,5 @@
-import { PendingAdminPage } from "@/components/admin/PendingAdminPage";
+import { PaymentsAdmin } from "@/components/admin/PaymentsAdmin";
 
 export default function AdminPaymentsPage() {
-  return (
-    <PendingAdminPage
-      title="Pagamentos"
-      description="Area reservada para acompanhar recargas, pagamentos e conciliacao operacional."
-    />
-  );
+  return <PaymentsAdmin />;
 }

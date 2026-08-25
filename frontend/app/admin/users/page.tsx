@@ -1,10 +1,5 @@
-import { PendingAdminPage } from "@/components/admin/PendingAdminPage";
+import { UsersAdmin } from "@/components/admin/UsersAdmin";
 
 export default function AdminUsersPage() {
-  return (
-    <PendingAdminPage
-      title="Usuarios"
-      description="Area reservada para acompanhar perfis, acessos e usuarios da plataforma."
-    />
-  );
+  return <UsersAdmin />;
 }

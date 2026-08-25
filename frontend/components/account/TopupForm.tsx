@@ -1,6 +1,4 @@
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { FormEvent, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -12,53 +10,66 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { topupSchema } from "@/lib/validators";
+import { formatCurrency } from "@/lib/formatters";
 
-type TopupInput = z.input<typeof topupSchema>;
-type TopupValues = z.output<typeof topupSchema>;
+type TopupValues = {
+  amount_cents: number;
+};
 
 interface TopupFormProps {
   onSubmit: (values: TopupValues) => void;
   isLoading: boolean;
 }
 
+function centsFromInput(value: string): number {
+  const digits = value.replace(/\D/g, "");
+  return digits ? Number(digits) : 0;
+}
+
 export function TopupForm({ onSubmit, isLoading }: TopupFormProps) {
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<TopupInput, unknown, TopupValues>({
-    resolver: zodResolver(topupSchema),
-    defaultValues: { amount_cents: 2500 },
-  });
+  const [amountCents, setAmountCents] = useState(2500);
+  const [error, setError] = useState("");
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (amountCents < 100) {
+      setError("Valor minimo de recarga e R$ 1,00.");
+      return;
+    }
+
+    onSubmit({ amount_cents: amountCents });
+  }
+
+  function handleAmountChange(value: string) {
+    setAmountCents(centsFromInput(value));
+    setError("");
+  }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Recarregar saldo</CardTitle>
         <CardDescription>
-          Informe o valor que deseja adicionar a sua carteira
+          Informe o valor em reais que deseja adicionar a sua carteira
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="amount_cents">Valor em centavos</Label>
+            <Label htmlFor="amount_display">Valor em reais</Label>
             <Input
-              id="amount_cents"
-              type="number"
-              placeholder="Ex: 2500 para R$ 25,00"
-              {...register("amount_cents", { valueAsNumber: true })}
+              id="amount_display"
+              type="text"
+              inputMode="numeric"
+              placeholder="R$ 0,00"
+              value={formatCurrency(amountCents)}
+              onChange={(event) => handleAmountChange(event.target.value)}
               disabled={isLoading}
             />
-            {errors.amount_cents ? (
-              <p className="text-sm text-destructive">
-                {errors.amount_cents.message}
-              </p>
-            ) : null}
+            {error ? <p className="text-sm text-destructive">{error}</p> : null}
             <p className="text-xs text-muted-foreground">
-              Valor minimo de R$ 1,00. A confirmacao de pagamento e simulada
-              nesta demonstracao.
+              Digite os numeros do valor. Exemplo: 1234 vira R$ 12,34.
             </p>
           </div>
           <Button type="submit" className="w-full" disabled={isLoading}>

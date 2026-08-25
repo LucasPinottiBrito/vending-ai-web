@@ -17,6 +17,7 @@ const { normalizeDispenseCommand } = require("../models/DispenseCommandModel");
 const { normalizeInventory } = require("../models/InventoryModel");
 const { normalizeWallet } = require("../models/WalletModel");
 const { normalizeWalletTransaction } = require("../models/WalletTransactionModel");
+const { isHeartbeatFresh } = require("../models/MachineModel");
 const { isSupportedPhysicalSlot, validateSlotCode } = require("../utils/esp32Command");
 
 class SaleService extends IService {
@@ -46,12 +47,18 @@ class SaleService extends IService {
   }
 
   async getById(id, context = {}) {
-    const details = await this.getSaleDetails(id);
+    let details = await this.getSaleDetails(id);
     if (!details.sale) {
       throw new ApiError(404, "Sale not found", "SALE_NOT_FOUND");
     }
 
     this.assertCanAccessSale(details.sale, context);
+
+    const expired = await this.expireStaleDispenseForSale(id, context);
+    if (expired) {
+      details = await this.getSaleDetails(id);
+    }
+
     return details;
   }
 
@@ -308,7 +315,11 @@ class SaleService extends IService {
   }
 
   validateCheckoutTarget(inventory) {
-    if (!inventory.machine_is_active || inventory.machine_status !== "ONLINE") {
+    if (
+      !inventory.machine_is_active ||
+      inventory.machine_status !== "ONLINE" ||
+      !isHeartbeatFresh(inventory.machine_last_seen_at)
+    ) {
       throw new ApiError(409, "Machine is not available for purchases", "MACHINE_NOT_AVAILABLE");
     }
 
@@ -379,6 +390,153 @@ class SaleService extends IService {
       issued_at: issuedAt.toISOString(),
       expires_at: expiresAt.toISOString(),
     };
+  }
+
+  async expireStaleDispenseForSale(saleId, context = {}) {
+    const connection = await mysql.getPool().getConnection();
+    const logs = [];
+
+    try {
+      await connection.beginTransaction();
+
+      const commandBefore = normalizeDispenseCommand(
+        await this.dispenseCommandDAO.findFirstBySaleIdForUpdate(saleId, connection),
+      );
+      if (!commandBefore || !["PENDING", "PUBLISHED", "ACKED", "EXPIRED"].includes(commandBefore.status)) {
+        await connection.commit();
+        return false;
+      }
+
+      const saleBefore = normalizeSale(await this.saleDAO.findByIdForUpdate(saleId, connection));
+      if (!saleBefore || ["DISPENSED", "REFUNDED"].includes(saleBefore.status)) {
+        await connection.commit();
+        return false;
+      }
+
+      const existingRefunds = await this.findRefundTransactions(saleBefore.id, connection);
+      if (commandBefore.status === "EXPIRED" && existingRefunds.length > 0) {
+        await connection.commit();
+        return false;
+      }
+
+      const ageBase = commandBefore.published_at || commandBefore.created_at;
+      if (!this.isCommandExpired(ageBase)) {
+        await connection.commit();
+        return false;
+      }
+
+      const inventoryBefore = normalizeInventory(
+        await this.inventoryDAO.findForCheckout(
+          {
+            machine_id: commandBefore.machine_id,
+            slot_id: commandBefore.slot_id,
+            product_id: commandBefore.product_id,
+          },
+          connection,
+          { forUpdate: true },
+        ),
+      );
+      const inventoryAfter =
+        inventoryBefore && inventoryBefore.quantity_reserved > 0
+          ? normalizeInventory(await this.inventoryDAO.releaseReserved(inventoryBefore.id, 1, connection))
+          : inventoryBefore;
+
+      const commandAfter = normalizeDispenseCommand(
+        await this.dispenseCommandDAO.update(
+          commandBefore.id,
+          {
+            status: "EXPIRED",
+            completed_at: new Date(),
+            last_error: "Processing timeout",
+          },
+          connection,
+        ),
+      );
+      const failedSale = normalizeSale(
+        await this.saleDAO.update(
+          saleBefore.id,
+          { status: "FAILED", failure_reason: "Processing timeout" },
+          connection,
+        ),
+      );
+      const walletBefore = normalizeWallet(
+        await this.walletDAO.findByUserId(saleBefore.user_id, connection, { forUpdate: true }),
+      );
+      const walletAfter = normalizeWallet(
+        await this.walletDAO.credit(walletBefore.id, saleBefore.total_cents, connection),
+      );
+      const refund = normalizeWalletTransaction(
+        await this.walletTransactionDAO.create(
+          {
+            wallet_id: walletAfter.id,
+            user_id: saleBefore.user_id,
+            sale_id: saleBefore.id,
+            type: "REFUND",
+            amount_cents: saleBefore.total_cents,
+            status: "COMPLETED",
+            reference_type: "REFUND",
+            reference_id: saleBefore.id,
+            description: "Refund for processing timeout",
+          },
+          connection,
+        ),
+      );
+      const saleAfter = normalizeSale(
+        await this.saleDAO.update(saleBefore.id, { status: "REFUNDED" }, connection),
+      );
+
+      await connection.commit();
+
+      if (inventoryBefore && inventoryAfter && inventoryBefore.id === inventoryAfter.id) {
+        logs.push({
+          eventType: "UPDATE",
+          table: "inventory",
+          recordId: inventoryAfter.id,
+          before: inventoryBefore,
+          after: inventoryAfter,
+        });
+      }
+      logs.push(
+        {
+          eventType: "UPDATE",
+          table: "dispense_commands",
+          recordId: commandAfter.id,
+          before: commandBefore,
+          after: commandAfter,
+          details: { timeout_ms: 60_000 },
+        },
+        { eventType: "UPDATE", table: "sales", recordId: failedSale.id, before: saleBefore, after: failedSale },
+        { eventType: "UPDATE", table: "wallets", recordId: walletAfter.id, before: walletBefore, after: walletAfter },
+        { eventType: "CREATE", table: "wallet_transactions", recordId: refund.id, after: refund },
+        { eventType: "UPDATE", table: "sales", recordId: saleAfter.id, before: failedSale, after: saleAfter },
+      );
+
+      for (const log of logs) {
+        await this.logCrud(log.eventType, { context, ...log });
+      }
+
+      return true;
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+  }
+
+  isCommandExpired(value) {
+    if (!value) return false;
+    const timestamp = value instanceof Date ? value.getTime() : new Date(value).getTime();
+    if (Number.isNaN(timestamp)) return false;
+    return Date.now() - timestamp > 60 * 1000;
+  }
+
+  async findRefundTransactions(saleId, connection) {
+    const [rows] = await connection.query(
+      "SELECT id FROM wallet_transactions WHERE sale_id = ? AND type = 'REFUND' LIMIT 1",
+      [saleId],
+    );
+    return rows;
   }
 
   async logCrud(eventType, { context, table, recordId, before = null, after = null, details = {} }) {

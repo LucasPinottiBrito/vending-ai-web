@@ -1,9 +1,9 @@
 const { Router } = require("express");
 
 const PaymentController = require("../controllers/PaymentController");
-const { authMiddleware } = require("../middlewares/auth_middleware");
+const { authMiddleware, requireRole } = require("../middlewares/auth_middleware");
 const validate = require("../middlewares/validation_middleware");
-const { paymentIdParamSchema } = require("../validators/paymentValidator");
+const { paymentIdParamSchema, paymentListQuerySchema } = require("../validators/paymentValidator");
 
 class PaymentRoutes {
   constructor(paymentController = new PaymentController()) {
@@ -13,6 +13,13 @@ class PaymentRoutes {
   }
 
   register() {
+    this.router.get(
+      "/admin/payments",
+      authMiddleware,
+      requireRole("ADMIN"),
+      validate({ query: paymentListQuerySchema }),
+      this.paymentController.list,
+    );
     this.router.get(
       "/payments/:id",
       authMiddleware,

@@ -59,14 +59,27 @@ class UserDAO extends IDAO {
     const params = [];
     const where = [];
 
+    if (filters.search) {
+      where.push("(name LIKE ? OR email LIKE ?)");
+      params.push(`%${filters.search}%`, `%${filters.search}%`);
+    }
+
     if (filters.email) {
       where.push("email = ?");
       params.push(filters.email);
     }
 
-    if (filters.role) {
+    if (filters.role && filters.role !== "all") {
       where.push("role = ?");
       params.push(filters.role);
+    }
+
+    if (filters.active === "active") {
+      where.push("is_active = 1");
+    }
+
+    if (filters.active === "inactive") {
+      where.push("is_active = 0");
     }
 
     const whereSql = where.length ? `WHERE ${where.join(" AND ")}` : "";

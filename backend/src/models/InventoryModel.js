@@ -24,6 +24,7 @@ function normalizeInventory(row) {
     image_path: row.image_path || null,
     machine_slug: row.machine_slug || null,
     machine_status: row.machine_status || null,
+    machine_last_seen_at: row.machine_last_seen_at || null,
     created_at: row.created_at || null,
     updated_at: row.updated_at || null,
   };

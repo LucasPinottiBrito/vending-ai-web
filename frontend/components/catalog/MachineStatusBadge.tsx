@@ -1,3 +1,5 @@
+import { CircleCheck, CircleX } from "lucide-react";
+
 import { Badge } from "@/components/ui/badge";
 
 interface MachineStatusBadgeProps {
@@ -6,7 +8,12 @@ interface MachineStatusBadgeProps {
 }
 
 export function MachineStatusBadge(props: MachineStatusBadgeProps) {
-  void props;
-  // Demo mode: until ESP32-S3 heartbeat is fully integrated, catalog displays machines as online.
-  return <Badge variant="secondary">Online</Badge>;
+  const Icon = props.canSell ? CircleCheck : CircleX;
+
+  return (
+    <Badge variant={props.canSell ? "secondary" : "destructive"}>
+      <Icon data-icon="inline-start" />
+      {props.canSell ? "Online" : props.status === "ONLINE" ? "Sem heartbeat" : "Offline"}
+    </Badge>
+  );
 }

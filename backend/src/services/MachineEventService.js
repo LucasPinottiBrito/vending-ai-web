@@ -510,7 +510,7 @@ class MachineEventService extends IService {
     return rows;
   }
 
-  async markOfflineMachines(thresholdDate = new Date(Date.now() - 70 * 1000)) {
+  async markOfflineMachines(thresholdDate = new Date(Date.now() - 60 * 1000)) {
     return this.machineDAO.markOfflineWithoutHeartbeat(thresholdDate);
   }
 

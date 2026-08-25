@@ -28,7 +28,9 @@ const adminLinks = [
   { href: "/admin/machines", label: "Maquinas", icon: MonitorCog },
   { href: "/admin/products", label: "Produtos", icon: Package },
   { href: "/admin/inventory", label: "Estoque", icon: Boxes },
+  { href: "/admin/users", label: "Usuarios", icon: Users },
   { href: "/admin/sales", label: "Vendas", icon: Receipt },
+  { href: "/admin/payments", label: "Pagamentos", icon: WalletCards },
   { href: "/admin/import-export", label: "Importar / Exportar", icon: Download },
   { href: "/admin/reports", label: "Relatorios", icon: FileText },
   { href: "/admin/charts", label: "Indicadores", icon: BarChart3 },
@@ -36,8 +38,6 @@ const adminLinks = [
 ];
 
 const pendingLinks = [
-  { href: "/admin/users", label: "Usuarios", icon: Users },
-  { href: "/admin/payments", label: "Pagamentos", icon: WalletCards },
   { href: "/admin/events", label: "Eventos", icon: Zap },
 ];
 

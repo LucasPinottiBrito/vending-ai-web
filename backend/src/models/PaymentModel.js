@@ -13,6 +13,8 @@ function normalizePayment(row) {
     mock_copy_paste: row.mock_copy_paste || null,
     expires_at: row.expires_at || null,
     paid_at: row.paid_at || null,
+    user_name: row.user_name || null,
+    user_email: row.user_email || null,
     created_at: row.created_at || null,
     updated_at: row.updated_at || null,
   };

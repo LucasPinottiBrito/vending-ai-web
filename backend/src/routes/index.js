@@ -13,6 +13,7 @@ const ProductRoutes = require("./ProductRoutes");
 const ReportRoutes = require("./ReportRoutes");
 const SaleRoutes = require("./SaleRoutes");
 const SlotRoutes = require("./SlotRoutes");
+const UserRoutes = require("./UserRoutes");
 const WalletRoutes = require("./WalletRoutes");
 
 function createMainRouter() {
@@ -24,6 +25,7 @@ function createMainRouter() {
   router.use(new MachineRoutes().getRouter());
   router.use(new SlotRoutes().getRouter());
   router.use(new InventoryRoutes().getRouter());
+  router.use(new UserRoutes().getRouter());
   router.use(new WalletRoutes().getRouter());
   router.use(new PaymentRoutes().getRouter());
   router.use(new SaleRoutes().getRouter());

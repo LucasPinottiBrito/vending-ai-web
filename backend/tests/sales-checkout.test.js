@@ -80,16 +80,29 @@ async function registerUser() {
   };
 }
 
-async function createFixture({ suffix, priceCents = 700, stock = 2, reserved = 0, machineStatus = "ONLINE" }) {
+async function createFixture({
+  suffix,
+  priceCents = 700,
+  stock = 2,
+  reserved = 0,
+  machineStatus = "ONLINE",
+  lastSeenAt = new Date(),
+}) {
   const [productResult] = await mysql.query(
     `INSERT INTO products (sku, name, category, price_cents, is_active)
      VALUES (?, ?, ?, ?, 1)`,
     [`${skuPrefix}-${suffix}`, `Produto Checkout ${suffix}`, "Checkout", priceCents],
   );
   const [machineResult] = await mysql.query(
-    `INSERT INTO machines (name, slug, location, status, is_active)
-     VALUES (?, ?, ?, ?, 1)`,
-    [`Maquina Checkout ${suffix}`, `${slugPrefix}-${suffix.toLowerCase()}`, "Bloco T", machineStatus],
+    `INSERT INTO machines (name, slug, location, status, last_seen_at, is_active)
+     VALUES (?, ?, ?, ?, ?, 1)`,
+    [
+      `Maquina Checkout ${suffix}`,
+      `${slugPrefix}-${suffix.toLowerCase()}`,
+      "Bloco T",
+      machineStatus,
+      lastSeenAt,
+    ],
   );
   const [slotResult] = await mysql.query(
     `INSERT INTO slots (machine_id, code, motor_id, sensor_column_id, is_enabled)
@@ -112,6 +125,8 @@ async function createFixture({ suffix, priceCents = 700, stock = 2, reserved = 0
 }
 
 async function createPhysicalMachineIncompatibleFixture({ suffix, priceCents = 700, stock = 2 }) {
+  await mysql.query("UPDATE machines SET status = 'ONLINE', last_seen_at = ? WHERE id = 1", [new Date()]);
+
   const [productResult] = await mysql.query(
     `INSERT INTO products (sku, name, category, price_cents, is_active)
      VALUES (?, ?, ?, ?, 1)`,
@@ -176,6 +191,14 @@ async function getSaleItems(saleId) {
 
 async function getDispenseCommands(saleId) {
   const [rows] = await mysql.query("SELECT * FROM dispense_commands WHERE sale_id = ?", [saleId]);
+  return rows;
+}
+
+async function getRefunds(userId, saleId) {
+  const [rows] = await mysql.query(
+    "SELECT * FROM wallet_transactions WHERE user_id = ? AND sale_id = ? AND type = 'REFUND'",
+    [userId, saleId],
+  );
   return rows;
 }
 
@@ -360,6 +383,96 @@ describe("sales checkout routes", () => {
       .expect(409);
 
     expect(response.body.error.code).toBe("MACHINE_NOT_AVAILABLE");
+  });
+
+  test("blocks checkout when machine heartbeat is older than one minute", async () => {
+    const fixture = await createFixture({
+      suffix: "STALEHB",
+      priceCents: 500,
+      stock: 2,
+      machineStatus: "ONLINE",
+      lastSeenAt: new Date(Date.now() - 61_000),
+    });
+    await setWalletBalance(auth.user.id, 5000);
+    const walletBefore = await getWallet(auth.user.id);
+    const inventoryBefore = await getInventory(fixture.inventory_id);
+    const salesBefore = (await getSaleRows(auth.user.id)).length;
+
+    const response = await request(app)
+      .post("/api/sales/checkout")
+      .set("Authorization", `Bearer ${auth.token}`)
+      .send({
+        machine_id: fixture.machine_id,
+        slot_id: fixture.slot_id,
+        product_id: fixture.product_id,
+      })
+      .expect(409);
+
+    const walletAfter = await getWallet(auth.user.id);
+    const inventoryAfter = await getInventory(fixture.inventory_id);
+    const salesAfter = (await getSaleRows(auth.user.id)).length;
+
+    expect(response.body.error.code).toBe("MACHINE_NOT_AVAILABLE");
+    expect(walletAfter.balance_cents).toBe(walletBefore.balance_cents);
+    expect(inventoryAfter.quantity_available).toBe(inventoryBefore.quantity_available);
+    expect(inventoryAfter.quantity_reserved).toBe(inventoryBefore.quantity_reserved);
+    expect(salesAfter).toBe(salesBefore);
+  });
+
+  test("expires stale dispense command on sale detail and refunds only once", async () => {
+    const fixture = await createFixture({ suffix: "EXPIRE", priceCents: 600, stock: 2 });
+    await setWalletBalance(auth.user.id, 5000);
+
+    const checkout = await request(app)
+      .post("/api/sales/checkout")
+      .set("Authorization", `Bearer ${auth.token}`)
+      .set("Idempotency-Key", `checkout-${runId}-expire`)
+      .send({
+        machine_id: fixture.machine_id,
+        slot_id: fixture.slot_id,
+        product_id: fixture.product_id,
+      })
+      .expect(201);
+
+    const expiredSaleId = checkout.body.data.sale.id;
+    const expiredCommandId = checkout.body.data.dispense_command.id;
+    const staleDate = new Date(Date.now() - 61_000);
+
+    await mysql.query("UPDATE dispense_commands SET created_at = ?, published_at = ? WHERE id = ?", [
+      staleDate,
+      staleDate,
+      expiredCommandId,
+    ]);
+
+    const firstResponse = await request(app)
+      .get(`/api/sales/${expiredSaleId}`)
+      .set("Authorization", `Bearer ${auth.token}`)
+      .expect(200);
+    const secondResponse = await request(app)
+      .get(`/api/sales/${expiredSaleId}`)
+      .set("Authorization", `Bearer ${auth.token}`)
+      .expect(200);
+
+    const wallet = await getWallet(auth.user.id);
+    const inventory = await getInventory(fixture.inventory_id);
+    const commands = await getDispenseCommands(expiredSaleId);
+    const refunds = await getRefunds(auth.user.id, expiredSaleId);
+
+    expect(firstResponse.body.data.sale).toMatchObject({
+      id: expiredSaleId,
+      status: "REFUNDED",
+      failure_reason: "Processing timeout",
+    });
+    expect(secondResponse.body.data.sale.status).toBe("REFUNDED");
+    expect(commands[0]).toMatchObject({
+      id: expiredCommandId,
+      status: "EXPIRED",
+    });
+    expect(inventory.quantity_available).toBe(2);
+    expect(inventory.quantity_reserved).toBe(0);
+    expect(wallet.balance_cents).toBe(5000);
+    expect(refunds).toHaveLength(1);
+    expect(refunds[0].amount_cents).toBe(600);
   });
 
   test("blocks checkout for physical machine slot unsupported by ESP before side effects", async () => {
