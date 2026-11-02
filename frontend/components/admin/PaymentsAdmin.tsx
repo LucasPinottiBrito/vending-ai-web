@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { startTransition, useCallback, useEffect, useState } from "react";
 import { Calendar, FilterX, Search, WalletCards } from "lucide-react";
 
 import { ErrorAlert } from "@/components/feedback/ErrorAlert";
@@ -82,7 +82,9 @@ export function PaymentsAdmin() {
   }, [endDate, search, startDate, status, type]);
 
   useEffect(() => {
-    void load();
+    startTransition(async () => {
+      await load();
+    });
   }, [load]);
 
   function clearFilters() {

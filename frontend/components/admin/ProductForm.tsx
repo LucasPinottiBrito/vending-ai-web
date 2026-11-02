@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -31,11 +31,11 @@ export function ProductForm({
     register,
     handleSubmit,
     setValue,
-    watch,
+    control,
     reset,
     formState: { errors },
   } = useForm<ProductInput, unknown, ProductValues>({
-    resolver: zodResolver(productSchema) as any,
+    resolver: zodResolver(productSchema),
     defaultValues: {
       sku: "",
       name: "",
@@ -47,7 +47,7 @@ export function ProductForm({
     },
   });
 
-  const isActiveValue = watch("is_active");
+  const isActiveValue = useWatch({ control, name: "is_active" });
 
   useEffect(() => {
     if (initialValues) {

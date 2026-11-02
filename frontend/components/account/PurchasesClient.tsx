@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { startTransition, useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { Search, Calendar, FilterX } from "lucide-react";
+import { Calendar, FilterX } from "lucide-react";
 
 import { ErrorAlert } from "@/components/feedback/ErrorAlert";
 import { LoadingState } from "@/components/feedback/LoadingState";
@@ -70,7 +70,9 @@ export function PurchasesClient() {
   }, [status, startDate, endDate]);
 
   useEffect(() => {
-    load();
+    startTransition(async () => {
+      await load();
+    });
   }, [load]);
 
   const clearFilters = () => {

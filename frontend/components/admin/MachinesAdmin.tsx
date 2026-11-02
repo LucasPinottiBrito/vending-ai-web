@@ -1,12 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { startTransition, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 import { z } from "zod";
 import {
   Edit,
-  MonitorCog,
   MoreVertical,
   Plus,
   Search,
@@ -25,7 +24,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -113,7 +111,9 @@ export function MachinesAdmin() {
   }, [search, status, active]);
 
   useEffect(() => {
-    load();
+    startTransition(async () => {
+      await load();
+    });
   }, [load]);
 
   async function handleCreate(values: MachineValues) {

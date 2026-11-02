@@ -1,3 +1,5 @@
+> Escopo vigente: [especificação v2](../docs/especificacao-plataforma-v2.md). A reformulação visual ainda será implementada nas etapas 3–5.
+
 # Frontend - Vending AI Web Platform
 
 Aplicacao Next.js/React da plataforma web da vending machine. O frontend consome somente o backend Express configurado em `NEXT_PUBLIC_API_URL`; nao acessa MySQL nem MongoDB diretamente.
@@ -76,7 +78,7 @@ Administrativas:
 - `/admin/charts`
 - `/admin/logs`
 
-Rotas administrativas criadas com aviso de endpoint pendente:
+Rotas administrativas adicionais (usuários e pagamentos já possuem endpoints; eventos devem ser conferidos no inventário):
 
 - `/admin/users`
 - `/admin/payments`

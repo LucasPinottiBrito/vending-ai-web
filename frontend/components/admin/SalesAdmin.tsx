@@ -1,19 +1,17 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { startTransition, useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { Search, Calendar, FilterX, Receipt, Eye } from "lucide-react";
+import { Calendar, FilterX, Receipt, Eye } from "lucide-react";
 
 import { ErrorAlert } from "@/components/feedback/ErrorAlert";
 import { LoadingState } from "@/components/feedback/LoadingState";
 import { AdminShell } from "@/components/layout/AdminShell";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -92,7 +90,9 @@ export function SalesAdmin() {
   }, [status, machineId, startDate, endDate]);
 
   useEffect(() => {
-    loadData();
+    startTransition(async () => {
+      await loadData();
+    });
   }, [loadData]);
 
   const clearFilters = () => {

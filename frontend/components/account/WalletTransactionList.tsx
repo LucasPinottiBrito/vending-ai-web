@@ -46,11 +46,13 @@ export function WalletTransactionList({ transactions }: WalletTransactionListPro
               </TableRow>
             </TableHeader>
             <TableBody>
-              {transactions.map((t) => (
+              {transactions.map((t) => {
+                const isCredit = t.type === "CREDIT" || t.type === "REFUND";
+                return (
                 <TableRow key={t.id}>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      {t.type === "CREDIT" ? (
+                      {isCredit ? (
                         <PlusCircle className="h-4 w-4 text-green-500" />
                       ) : (
                         <MinusCircle className="h-4 w-4 text-red-500" />
@@ -67,11 +69,12 @@ export function WalletTransactionList({ transactions }: WalletTransactionListPro
                       {t.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className={`text-right font-semibold ${t.type === "CREDIT" ? "text-green-600" : "text-red-600"}`}>
-                    {t.type === "CREDIT" ? "+" : "-"} {formatCurrency(t.amount_cents)}
+                  <TableCell className={`text-right font-semibold ${isCredit ? "text-green-600" : "text-red-600"}`}>
+                    {isCredit ? "+" : "-"} {formatCurrency(t.amount_cents)}
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
           </Table>
         )}

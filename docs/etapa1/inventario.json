@@ -1,0 +1,731 @@
+{
+  "scope": "Stage 1: current routes before module and storage migration. Extracted from source; not a runtime availability claim.",
+  "apiMounts": [
+    "/api",
+    "/"
+  ],
+  "apiRoutes": [
+    {
+      "method": "POST",
+      "path": "/api/auth/register",
+      "compatibilityAlias": "/auth/register",
+      "source": "backend/src/routes/AuthRoutes.js",
+      "access": "PUBLIC"
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/login",
+      "compatibilityAlias": "/auth/login",
+      "source": "backend/src/routes/AuthRoutes.js",
+      "access": "PUBLIC"
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/me",
+      "compatibilityAlias": "/auth/me",
+      "source": "backend/src/routes/AuthRoutes.js",
+      "access": "AUTHENTICATED"
+    },
+    {
+      "method": "POST",
+      "path": "/api/auth/logout",
+      "compatibilityAlias": "/auth/logout",
+      "source": "backend/src/routes/AuthRoutes.js",
+      "access": "AUTHENTICATED"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/charts/sales-by-month",
+      "compatibilityAlias": "/admin/charts/sales-by-month",
+      "source": "backend/src/routes/ChartRoutes.js",
+      "access": "ADMIN"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/dashboard/summary",
+      "compatibilityAlias": "/admin/dashboard/summary",
+      "source": "backend/src/routes/DashboardRoutes.js",
+      "access": "ADMIN"
+    },
+    {
+      "method": "GET",
+      "path": "/api/health",
+      "compatibilityAlias": "/health",
+      "source": "backend/src/routes/HealthRoutes.js",
+      "access": "PUBLIC"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/export/json",
+      "compatibilityAlias": "/admin/export/json",
+      "source": "backend/src/routes/ImportExportRoutes.js",
+      "access": "ADMIN"
+    },
+    {
+      "method": "POST",
+      "path": "/api/admin/import/json",
+      "compatibilityAlias": "/admin/import/json",
+      "source": "backend/src/routes/ImportExportRoutes.js",
+      "access": "ADMIN"
+    },
+    {
+      "method": "GET",
+      "path": "/api/inventory",
+      "compatibilityAlias": "/inventory",
+      "source": "backend/src/routes/InventoryRoutes.js",
+      "access": "ADMIN"
+    },
+    {
+      "method": "GET",
+      "path": "/api/machines/:machineId/inventory",
+      "compatibilityAlias": "/machines/:machineId/inventory",
+      "source": "backend/src/routes/InventoryRoutes.js",
+      "access": "ADMIN"
+    },
+    {
+      "method": "GET",
+      "path": "/api/inventory/:id",
+      "compatibilityAlias": "/inventory/:id",
+      "source": "backend/src/routes/InventoryRoutes.js",
+      "access": "ADMIN"
+    },
+    {
+      "method": "POST",
+      "path": "/api/inventory",
+      "compatibilityAlias": "/inventory",
+      "source": "backend/src/routes/InventoryRoutes.js",
+      "access": "ADMIN"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/inventory/:id",
+      "compatibilityAlias": "/inventory/:id",
+      "source": "backend/src/routes/InventoryRoutes.js",
+      "access": "ADMIN"
+    },
+    {
+      "method": "POST",
+      "path": "/api/inventory/:id/adjust",
+      "compatibilityAlias": "/inventory/:id/adjust",
+      "source": "backend/src/routes/InventoryRoutes.js",
+      "access": "ADMIN"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/logs",
+      "compatibilityAlias": "/admin/logs",
+      "source": "backend/src/routes/LogRoutes.js",
+      "access": "ADMIN"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/logs/export/xml",
+      "compatibilityAlias": "/admin/logs/export/xml",
+      "source": "backend/src/routes/LogRoutes.js",
+      "access": "ADMIN"
+    },
+    {
+      "method": "GET",
+      "path": "/api/machines",
+      "compatibilityAlias": "/machines",
+      "source": "backend/src/routes/MachineRoutes.js",
+      "access": "PUBLIC"
+    },
+    {
+      "method": "GET",
+      "path": "/api/machines/slug/:slug/catalog",
+      "compatibilityAlias": "/machines/slug/:slug/catalog",
+      "source": "backend/src/routes/MachineRoutes.js",
+      "access": "PUBLIC"
+    },
+    {
+      "method": "GET",
+      "path": "/api/machines/slug/:slug",
+      "compatibilityAlias": "/machines/slug/:slug",
+      "source": "backend/src/routes/MachineRoutes.js",
+      "access": "PUBLIC"
+    },
+    {
+      "method": "GET",
+      "path": "/api/machines/:id",
+      "compatibilityAlias": "/machines/:id",
+      "source": "backend/src/routes/MachineRoutes.js",
+      "access": "PUBLIC"
+    },
+    {
+      "method": "POST",
+      "path": "/api/machines",
+      "compatibilityAlias": "/machines",
+      "source": "backend/src/routes/MachineRoutes.js",
+      "access": "ADMIN"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/machines/:id",
+      "compatibilityAlias": "/machines/:id",
+      "source": "backend/src/routes/MachineRoutes.js",
+      "access": "ADMIN"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/machines/:id",
+      "compatibilityAlias": "/machines/:id",
+      "source": "backend/src/routes/MachineRoutes.js",
+      "access": "ADMIN"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/payments",
+      "compatibilityAlias": "/admin/payments",
+      "source": "backend/src/routes/PaymentRoutes.js",
+      "access": "ADMIN"
+    },
+    {
+      "method": "GET",
+      "path": "/api/payments/:id",
+      "compatibilityAlias": "/payments/:id",
+      "source": "backend/src/routes/PaymentRoutes.js",
+      "access": "AUTHENTICATED"
+    },
+    {
+      "method": "POST",
+      "path": "/api/payments/:id/confirm-mock",
+      "compatibilityAlias": "/payments/:id/confirm-mock",
+      "source": "backend/src/routes/PaymentRoutes.js",
+      "access": "AUTHENTICATED"
+    },
+    {
+      "method": "GET",
+      "path": "/api/products",
+      "compatibilityAlias": "/products",
+      "source": "backend/src/routes/ProductRoutes.js",
+      "access": "PUBLIC"
+    },
+    {
+      "method": "GET",
+      "path": "/api/products/:id",
+      "compatibilityAlias": "/products/:id",
+      "source": "backend/src/routes/ProductRoutes.js",
+      "access": "PUBLIC"
+    },
+    {
+      "method": "POST",
+      "path": "/api/products",
+      "compatibilityAlias": "/products",
+      "source": "backend/src/routes/ProductRoutes.js",
+      "access": "ADMIN"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/products/:id",
+      "compatibilityAlias": "/products/:id",
+      "source": "backend/src/routes/ProductRoutes.js",
+      "access": "ADMIN"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/products/:id",
+      "compatibilityAlias": "/products/:id",
+      "source": "backend/src/routes/ProductRoutes.js",
+      "access": "ADMIN"
+    },
+    {
+      "method": "POST",
+      "path": "/api/products/:id/image",
+      "compatibilityAlias": "/products/:id/image",
+      "source": "backend/src/routes/ProductRoutes.js",
+      "access": "ADMIN"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/reports/sales",
+      "compatibilityAlias": "/admin/reports/sales",
+      "source": "backend/src/routes/ReportRoutes.js",
+      "access": "ADMIN"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/reports/purchase-history",
+      "compatibilityAlias": "/admin/reports/purchase-history",
+      "source": "backend/src/routes/ReportRoutes.js",
+      "access": "ADMIN"
+    },
+    {
+      "method": "POST",
+      "path": "/api/sales/checkout",
+      "compatibilityAlias": "/sales/checkout",
+      "source": "backend/src/routes/SaleRoutes.js",
+      "access": "AUTHENTICATED"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sales",
+      "compatibilityAlias": "/sales",
+      "source": "backend/src/routes/SaleRoutes.js",
+      "access": "AUTHENTICATED"
+    },
+    {
+      "method": "GET",
+      "path": "/api/sales/:id",
+      "compatibilityAlias": "/sales/:id",
+      "source": "backend/src/routes/SaleRoutes.js",
+      "access": "AUTHENTICATED"
+    },
+    {
+      "method": "GET",
+      "path": "/api/users/me/purchases",
+      "compatibilityAlias": "/users/me/purchases",
+      "source": "backend/src/routes/SaleRoutes.js",
+      "access": "AUTHENTICATED"
+    },
+    {
+      "method": "GET",
+      "path": "/api/machines/:machineId/slots",
+      "compatibilityAlias": "/machines/:machineId/slots",
+      "source": "backend/src/routes/SlotRoutes.js",
+      "access": "ADMIN"
+    },
+    {
+      "method": "POST",
+      "path": "/api/machines/:machineId/slots",
+      "compatibilityAlias": "/machines/:machineId/slots",
+      "source": "backend/src/routes/SlotRoutes.js",
+      "access": "ADMIN"
+    },
+    {
+      "method": "PUT",
+      "path": "/api/slots/:id",
+      "compatibilityAlias": "/slots/:id",
+      "source": "backend/src/routes/SlotRoutes.js",
+      "access": "ADMIN"
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/slots/:id",
+      "compatibilityAlias": "/slots/:id",
+      "source": "backend/src/routes/SlotRoutes.js",
+      "access": "ADMIN"
+    },
+    {
+      "method": "GET",
+      "path": "/api/admin/users",
+      "compatibilityAlias": "/admin/users",
+      "source": "backend/src/routes/UserRoutes.js",
+      "access": "ADMIN"
+    },
+    {
+      "method": "GET",
+      "path": "/api/wallet/balance",
+      "compatibilityAlias": "/wallet/balance",
+      "source": "backend/src/routes/WalletRoutes.js",
+      "access": "AUTHENTICATED"
+    },
+    {
+      "method": "GET",
+      "path": "/api/wallet/transactions",
+      "compatibilityAlias": "/wallet/transactions",
+      "source": "backend/src/routes/WalletRoutes.js",
+      "access": "AUTHENTICATED"
+    },
+    {
+      "method": "POST",
+      "path": "/api/wallet/topup/mock",
+      "compatibilityAlias": "/wallet/topup/mock",
+      "source": "backend/src/routes/WalletRoutes.js",
+      "access": "AUTHENTICATED"
+    }
+  ],
+  "frontendRoutes": [
+    {
+      "path": "/account",
+      "source": "frontend/app/account/page.tsx",
+      "imports": [
+        "@/components/account/AccountDashboard"
+      ]
+    },
+    {
+      "path": "/account/purchases",
+      "source": "frontend/app/account/purchases/page.tsx",
+      "imports": [
+        "@/components/account/PurchasesClient"
+      ]
+    },
+    {
+      "path": "/account/purchases/[id]",
+      "source": "frontend/app/account/purchases/[id]/page.tsx",
+      "imports": [
+        "@/components/account/PurchaseStatusClient"
+      ]
+    },
+    {
+      "path": "/account/wallet",
+      "source": "frontend/app/account/wallet/page.tsx",
+      "imports": [
+        "@/components/account/WalletClient"
+      ]
+    },
+    {
+      "path": "/account/wallet/topup",
+      "source": "frontend/app/account/wallet/topup/page.tsx",
+      "imports": [
+        "@/components/account/TopupClient"
+      ]
+    },
+    {
+      "path": "/admin/charts",
+      "source": "frontend/app/admin/charts/page.tsx",
+      "imports": [
+        "@/components/charts/SalesByMonthChart"
+      ]
+    },
+    {
+      "path": "/admin/events",
+      "source": "frontend/app/admin/events/page.tsx",
+      "imports": [
+        "@/components/admin/PendingAdminPage"
+      ]
+    },
+    {
+      "path": "/admin/import-export",
+      "source": "frontend/app/admin/import-export/page.tsx",
+      "imports": [
+        "@/components/admin/ImportExportAdmin"
+      ]
+    },
+    {
+      "path": "/admin/inventory",
+      "source": "frontend/app/admin/inventory/page.tsx",
+      "imports": [
+        "@/components/admin/InventoryAdmin"
+      ]
+    },
+    {
+      "path": "/admin/logs",
+      "source": "frontend/app/admin/logs/page.tsx",
+      "imports": [
+        "@/components/admin/LogsAdmin"
+      ]
+    },
+    {
+      "path": "/admin/machines",
+      "source": "frontend/app/admin/machines/page.tsx",
+      "imports": [
+        "@/components/admin/MachinesAdmin"
+      ]
+    },
+    {
+      "path": "/admin/machines/[id]/slots",
+      "source": "frontend/app/admin/machines/[id]/slots/page.tsx",
+      "imports": [
+        "@/components/admin/SlotsAdmin"
+      ]
+    },
+    {
+      "path": "/admin",
+      "source": "frontend/app/admin/page.tsx",
+      "imports": [
+        "@/components/admin/AdminDashboard"
+      ]
+    },
+    {
+      "path": "/admin/payments",
+      "source": "frontend/app/admin/payments/page.tsx",
+      "imports": [
+        "@/components/admin/PaymentsAdmin"
+      ]
+    },
+    {
+      "path": "/admin/products",
+      "source": "frontend/app/admin/products/page.tsx",
+      "imports": [
+        "@/components/admin/ProductsAdmin"
+      ]
+    },
+    {
+      "path": "/admin/reports",
+      "source": "frontend/app/admin/reports/page.tsx",
+      "imports": [
+        "@/components/admin/ReportsAdmin"
+      ]
+    },
+    {
+      "path": "/admin/sales",
+      "source": "frontend/app/admin/sales/page.tsx",
+      "imports": [
+        "@/components/admin/SalesAdmin"
+      ]
+    },
+    {
+      "path": "/admin/users",
+      "source": "frontend/app/admin/users/page.tsx",
+      "imports": [
+        "@/components/admin/UsersAdmin"
+      ]
+    },
+    {
+      "path": "/catalogo",
+      "source": "frontend/app/catalogo/page.tsx",
+      "imports": [
+        "@/components/machines/MachineSelector"
+      ]
+    },
+    {
+      "path": "/login",
+      "source": "frontend/app/login/page.tsx",
+      "imports": [
+        "next/link",
+        "react",
+        "@/components/forms/AuthForms"
+      ]
+    },
+    {
+      "path": "/m/[slug]/checkout/[slotId]",
+      "source": "frontend/app/m/[slug]/checkout/[slotId]/page.tsx",
+      "imports": [
+        "@/components/catalog/CheckoutClient",
+        "@/components/layout/PageHeader"
+      ]
+    },
+    {
+      "path": "/m/[slug]",
+      "source": "frontend/app/m/[slug]/page.tsx",
+      "imports": [
+        "@/components/catalog/CatalogClient",
+        "@/components/layout/PageHeader"
+      ]
+    },
+    {
+      "path": "/m/[slug]/product/[productId]",
+      "source": "frontend/app/m/[slug]/product/[productId]/page.tsx",
+      "imports": [
+        "@/components/catalog/ProductDetailClient",
+        "@/components/layout/PageHeader"
+      ]
+    },
+    {
+      "path": "/machine/[slug]",
+      "source": "frontend/app/machine/[slug]/page.tsx",
+      "imports": [
+        "next/navigation"
+      ]
+    },
+    {
+      "path": "/",
+      "source": "frontend/app/page.tsx",
+      "imports": [
+        "@/components/marketing/AdminPreview",
+        "@/components/marketing/FeatureCards",
+        "@/components/marketing/FinalCTA",
+        "@/components/marketing/HeroSection",
+        "@/components/marketing/HowItWorks"
+      ]
+    },
+    {
+      "path": "/purchase/[id]",
+      "source": "frontend/app/purchase/[id]/page.tsx",
+      "imports": [
+        "@/components/account/PurchaseStatusClient"
+      ]
+    },
+    {
+      "path": "/register",
+      "source": "frontend/app/register/page.tsx",
+      "imports": [
+        "next/link",
+        "@/components/forms/AuthForms"
+      ]
+    }
+  ],
+  "apiConsumers": [
+    {
+      "source": "frontend/components/account/AccountDashboard.tsx",
+      "endpoints": [
+        "/api/wallet/balance"
+      ]
+    },
+    {
+      "source": "frontend/components/account/PurchasesClient.tsx",
+      "endpoints": [
+        "/api/users/me/purchases?${queryParams.toString()}"
+      ]
+    },
+    {
+      "source": "frontend/components/account/PurchaseStatusClient.tsx",
+      "endpoints": [
+        "/api/sales/${id}"
+      ]
+    },
+    {
+      "source": "frontend/components/account/TopupClient.tsx",
+      "endpoints": [
+        "/api/wallet/topup/mock",
+        "/api/payments/${payment.id}/confirm-mock"
+      ]
+    },
+    {
+      "source": "frontend/components/account/WalletClient.tsx",
+      "endpoints": [
+        "/api/wallet/balance",
+        "/api/wallet/transactions"
+      ]
+    },
+    {
+      "source": "frontend/components/admin/AdminDashboard.tsx",
+      "endpoints": [
+        "/api/admin/dashboard/summary"
+      ]
+    },
+    {
+      "source": "frontend/components/admin/ImportExportAdmin.tsx",
+      "endpoints": [
+        "/api/admin/export/json",
+        "/api/admin/import/json"
+      ]
+    },
+    {
+      "source": "frontend/components/admin/InventoryAdmin.tsx",
+      "endpoints": [
+        "/api/inventory?${queryParams.toString()}",
+        "/api/machines",
+        "/api/inventory",
+        "/api/inventory/${editingItem.id}",
+        "/api/inventory/${id}/adjust"
+      ]
+    },
+    {
+      "source": "frontend/components/admin/InventoryForm.tsx",
+      "endpoints": [
+        "/api/machines",
+        "/api/products",
+        "/api/machines/${selectedMachineId}/slots"
+      ]
+    },
+    {
+      "source": "frontend/components/admin/LogsAdmin.tsx",
+      "endpoints": [
+        "/api/admin/logs?${queryParams.toString()}",
+        "/api/admin/logs/export/xml"
+      ]
+    },
+    {
+      "source": "frontend/components/admin/MachinesAdmin.tsx",
+      "endpoints": [
+        "/api/machines?${queryParams.toString()}",
+        "/api/machines",
+        "/api/machines/${editingMachine.id}",
+        "/api/machines/${id}"
+      ]
+    },
+    {
+      "source": "frontend/components/admin/PaymentsAdmin.tsx",
+      "endpoints": [
+        "/api/admin/payments"
+      ]
+    },
+    {
+      "source": "frontend/components/admin/ProductsAdmin.tsx",
+      "endpoints": [
+        "/api/products?${queryParams.toString()}",
+        "/api/products",
+        "/api/products/${editingProduct.id}",
+        "/api/products/${product.id}",
+        "/api/products/${id}",
+        "/api/products/${productId}/image"
+      ]
+    },
+    {
+      "source": "frontend/components/admin/ReportsAdmin.tsx",
+      "endpoints": [
+        "/api/machines",
+        "/api/admin/reports/sales?${queryParams.toString()}"
+      ]
+    },
+    {
+      "source": "frontend/components/admin/SalesAdmin.tsx",
+      "endpoints": [
+        "/api/admin/reports/sales?${queryParams.toString()}",
+        "/api/machines"
+      ]
+    },
+    {
+      "source": "frontend/components/admin/SlotsAdmin.tsx",
+      "endpoints": [
+        "/api/machines/${machineId}/slots",
+        "/api/machines/${machineId}",
+        "/api/slots/${editingSlot.id}",
+        "/api/slots/${id}"
+      ]
+    },
+    {
+      "source": "frontend/components/admin/UsersAdmin.tsx",
+      "endpoints": [
+        "/api/admin/users"
+      ]
+    },
+    {
+      "source": "frontend/components/catalog/CatalogClient.tsx",
+      "endpoints": [
+        "/api/machines/slug/${slug}/catalog",
+        "/api/sales/checkout"
+      ]
+    },
+    {
+      "source": "frontend/components/catalog/CheckoutClient.tsx",
+      "endpoints": [
+        "/api/machines/slug/${slug}/catalog",
+        "/api/wallet/balance",
+        "/api/sales/checkout"
+      ]
+    },
+    {
+      "source": "frontend/components/catalog/ProductDetailClient.tsx",
+      "endpoints": [
+        "/api/machines/slug/${slug}/catalog"
+      ]
+    },
+    {
+      "source": "frontend/components/charts/SalesByMonthChart.tsx",
+      "endpoints": [
+        "/api/admin/charts/sales-by-month"
+      ]
+    },
+    {
+      "source": "frontend/components/machines/MachineSelector.tsx",
+      "endpoints": [
+        "/api/machines"
+      ]
+    },
+    {
+      "source": "frontend/components/reports/ReportsAdmin.tsx",
+      "endpoints": [
+        "/api/admin/reports/sales",
+        "/api/admin/reports/purchase-history"
+      ]
+    },
+    {
+      "source": "frontend/lib/auth.ts",
+      "endpoints": [
+        "/api/auth/login",
+        "/api/auth/register",
+        "/api/auth/logout",
+        "/api/auth/me"
+      ]
+    }
+  ],
+  "backendTests": [
+    "backend/tests/admin-users-payments.test.js",
+    "backend/tests/auth.test.js",
+    "backend/tests/connections.test.js",
+    "backend/tests/error-middleware.test.js",
+    "backend/tests/health.test.js",
+    "backend/tests/import-export-json.test.js",
+    "backend/tests/logs-xml-export.test.js",
+    "backend/tests/machines-slots-inventory.test.js",
+    "backend/tests/middlewares.test.js",
+    "backend/tests/mqtt-events.test.js",
+    "backend/tests/products.test.js",
+    "backend/tests/reports-charts.test.js",
+    "backend/tests/sales-checkout.test.js",
+    "backend/tests/wallet-payments.test.js"
+  ]
+}

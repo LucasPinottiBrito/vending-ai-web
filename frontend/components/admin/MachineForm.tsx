@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -36,11 +36,11 @@ export function MachineForm({
     register,
     handleSubmit,
     setValue,
-    watch,
+    control,
     reset,
     formState: { errors },
   } = useForm<MachineInput, unknown, MachineValues>({
-    resolver: zodResolver(machineSchema) as any,
+    resolver: zodResolver(machineSchema),
     defaultValues: {
       slug: "",
       name: "",
@@ -50,7 +50,7 @@ export function MachineForm({
     },
   });
 
-  const statusValue = watch("status");
+  const statusValue = useWatch({ control, name: "status" });
 
   useEffect(() => {
     if (initialValues) {
@@ -89,7 +89,7 @@ export function MachineForm({
         <Label htmlFor="status">Status</Label>
         <Select 
           value={statusValue} 
-          onValueChange={(val) => setValue("status", val as any)}
+          onValueChange={(val) => setValue("status", val as MachineValues["status"])}
         >
           <SelectTrigger id="status">
             <SelectValue placeholder="Selecione o status" />

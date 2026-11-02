@@ -255,7 +255,7 @@ export function ImportExportAdmin() {
   );
 }
 
-function AlertTriangle(props: any) {
+function AlertTriangle(props: React.ComponentProps<"svg">) {
   return (
     <svg
       {...props}

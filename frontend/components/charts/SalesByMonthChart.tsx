@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { startTransition, useEffect, useState, useCallback } from "react";
 import {
   BarElement,
   CategoryScale,
@@ -31,7 +31,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { apiRequest } from "@/lib/api";
 import { chartFilterSchema } from "@/lib/validators";
 
@@ -63,8 +62,8 @@ export function SalesByMonthChart() {
   const [error, setError] = useState<unknown>(null);
   const [isLoading, setIsLoading] = useState(true);
   
-  const form = useForm<ChartValues>({
-    resolver: zodResolver(chartFilterSchema) as any,
+  const form = useForm<z.input<typeof chartFilterSchema>, unknown, ChartValues>({
+    resolver: zodResolver(chartFilterSchema),
     defaultValues: { year: new Date().getFullYear() },
   });
 
@@ -85,7 +84,9 @@ export function SalesByMonthChart() {
   }, []);
 
   useEffect(() => {
-    load({ year: new Date().getFullYear() });
+    startTransition(async () => {
+      await load({ year: new Date().getFullYear() });
+    });
   }, [load]);
 
   const chartColors = [

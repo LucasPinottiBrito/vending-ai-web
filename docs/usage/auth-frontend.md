@@ -36,8 +36,10 @@ O backend retorna JWT Bearer no corpo da resposta. Como o backend atual nao emit
 - armazenar `{ user, token }` em `localStorage` na chave `vending-ai-session`;
 - nunca exibir o token em tela;
 - nunca registrar token completo em mensagens de erro;
-- remover sessao local se o formato armazenado estiver invalido;
+- ignorar sessão local com formato inválido, sem modificar storage durante a renderização;
 - sincronizar alteracoes de login/logout por evento local e evento `storage`.
+
+O hook `useAuth` usa `useSyncExternalStore`: o snapshot do servidor e da primeira hidratação representa sessão ainda não carregada; depois o navegador lê um snapshot primitivo e estável do storage. Isso evita renderizar menus diferentes durante a hidratação. A limpeza completa de storage em outra aba (`key === null`) também invalida a sessão. A API permanece responsável pela validação do JWT e do perfil.
 
 ## Envio automatico do token
 

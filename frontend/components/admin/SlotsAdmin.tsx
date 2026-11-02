@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { startTransition, useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 import {
@@ -94,7 +94,9 @@ export function SlotsAdmin({ machineId }: { machineId: string }) {
   }, [machineId]);
 
   useEffect(() => {
-    load();
+    startTransition(async () => {
+      await load();
+    });
   }, [load]);
 
   async function handleCreate(values: SlotValues) {

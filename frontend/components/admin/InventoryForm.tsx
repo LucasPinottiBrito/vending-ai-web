@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -45,11 +45,11 @@ export function InventoryForm({
     register,
     handleSubmit,
     setValue,
-    watch,
+    control,
     reset,
     formState: { errors },
-  } = useForm<InventoryValues>({
-    resolver: zodResolver(inventorySchema) as any,
+  } = useForm<InventoryInput, unknown, InventoryValues>({
+    resolver: zodResolver(inventorySchema),
     defaultValues: {
       machine_id: 0,
       slot_id: 0,
@@ -61,9 +61,10 @@ export function InventoryForm({
     },
   });
 
-  const selectedMachineId = watch("machine_id");
-  const selectedSlotId = watch("slot_id");
-  const selectedProductId = watch("product_id");
+  const selectedMachineId = Number(useWatch({ control, name: "machine_id" }));
+  const selectedSlotId = Number(useWatch({ control, name: "slot_id" }));
+  const selectedProductId = Number(useWatch({ control, name: "product_id" }));
+  const availableSlots = allSlots.filter((slot) => slot.machine_id === selectedMachineId);
 
   useEffect(() => {
     async function loadData() {
@@ -82,13 +83,13 @@ export function InventoryForm({
   }, []);
 
   useEffect(() => {
+    let active = true;
     if (selectedMachineId > 0) {
       apiRequest<{ slots: Slot[] }>(`/api/machines/${selectedMachineId}/slots`)
-        .then((res) => setAllSlots(res.data.slots))
-        .catch(() => setAllSlots([]));
-    } else {
-      setAllSlots([]);
+        .then((res) => { if (active) setAllSlots(res.data.slots); })
+        .catch(() => { if (active) setAllSlots([]); });
     }
+    return () => { active = false; };
   }, [selectedMachineId]);
 
   useEffect(() => {
@@ -138,7 +139,7 @@ export function InventoryForm({
             <SelectValue placeholder={selectedMachineId ? "Selecione o slot" : "Selecione uma máquina primeiro"} />
           </SelectTrigger>
           <SelectContent>
-            {allSlots.map((s) => (
+            {availableSlots.map((s) => (
               <SelectItem key={s.id} value={s.id.toString()}>
                 {s.code}
               </SelectItem>

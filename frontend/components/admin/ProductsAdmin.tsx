@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { startTransition, useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -113,7 +113,9 @@ export function ProductsAdmin() {
   }, [search, status, category]);
 
   useEffect(() => {
-    load();
+    startTransition(async () => {
+      await load();
+    });
   }, [load]);
 
   async function handleCreate(values: ProductValues) {

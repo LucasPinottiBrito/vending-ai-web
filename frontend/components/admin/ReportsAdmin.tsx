@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { FileText, Download, Calendar, FilterX, Receipt } from "lucide-react";
+import { FileText, Download, Calendar, FilterX } from "lucide-react";
 import { toast } from "sonner";
 import { jsPDF } from "jspdf";
 
@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiRequest } from "@/lib/api";
-import { formatCurrency, formatDateTime } from "@/lib/formatters";
+import { formatCurrency } from "@/lib/formatters";
 import { useAuth } from "@/hooks/useAuth";
 
 type Machine = { id: number; name: string };
@@ -67,7 +67,7 @@ export function ReportsAdmin() {
         report: {
           sales: Sale[];
           summary: Summary;
-          filters: any;
+          filters: Record<string, string | number | null>;
         };
       }>(`/api/admin/reports/sales?${queryParams.toString()}`);
 
@@ -156,7 +156,7 @@ export function ReportsAdmin() {
       }
 
       // Footer
-      const pageCount = (doc as any).internal.getNumberOfPages();
+      const pageCount = doc.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         doc.setFontSize(8);

@@ -1,0 +1,53 @@
+{
+  "stage": 1,
+  "backend": {
+    "suitesPassed": 14,
+    "testsPassed": 96
+  },
+  "browser": [
+    {
+      "test": "frontend auth flow",
+      "status": "passed"
+    },
+    {
+      "test": "stored customer session survives hydration and full page navigation",
+      "status": "passed"
+    },
+    {
+      "test": "logout and storage clearing synchronize across tabs",
+      "status": "passed"
+    },
+    {
+      "test": "invalid stored JSON is handled without crashing",
+      "status": "passed"
+    },
+    {
+      "test": "API protects admin data for visitors and customers and permits admins",
+      "status": "passed"
+    },
+    {
+      "test": "admin filters and typed forms stay responsive without writing records",
+      "status": "passed"
+    }
+  ],
+  "backup": {
+    "mysqlVerifiedTables": 12,
+    "mongoRestored": {
+      "documents": 455,
+      "indexes": 5
+    },
+    "localDirectory": "backups/stage1-20261102",
+    "codeArchiveExtracted": true
+  },
+  "inventory": {
+    "apiRoutes": 47,
+    "frontendRoutes": 27,
+    "frontendConsumers": 24
+  },
+  "baseline": {
+    "lintErrors": 18,
+    "lintWarnings": 22,
+    "hydrationReproduced": true,
+    "storageClearIssueReproduced": true
+  }
+}

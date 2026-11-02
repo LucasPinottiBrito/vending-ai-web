@@ -1,3 +1,5 @@
+> Documento histórico. As obrigações acadêmicas desta versão foram substituídas pela [especificação v2](especificacao-plataforma-v2.md). Não descreve o escopo vigente.
+
 # Especificação Completa do Projeto — Plataforma Web Full Stack para Vending Machine IoT
 
 **Versão:** 1.0  

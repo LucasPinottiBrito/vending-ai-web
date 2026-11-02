@@ -20,7 +20,7 @@ test("frontend auth flow", async ({ page }) => {
   await page.getByLabel("Senha").fill("Cliente@123");
   await page.getByRole("button", { name: "Entrar" }).click();
   await expect(page).toHaveURL(/\/account/);
-  await expect(page.getByText("Minha conta")).toBeVisible();
+  await expect(page.getByText("Dados principais da sua conta")).toBeVisible();
 
   await page.goto("http://localhost:3000/admin");
   await expect(page.getByText("Acesso administrativo necessario")).toBeVisible();
@@ -49,5 +49,5 @@ test("frontend auth flow", async ({ page }) => {
   await page.getByRole("button", { name: "Entrar" }).click();
   await expect(page).toHaveURL(/\/account/);
   await page.goto("http://localhost:3000/admin");
-  await expect(page.getByText("Painel administrativo")).toBeVisible();
+  await expect(page.getByRole("heading", { name: /Painel Administrativo/i })).toBeVisible();
 });

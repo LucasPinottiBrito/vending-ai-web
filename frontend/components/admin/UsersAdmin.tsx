@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { startTransition, useCallback, useEffect, useState } from "react";
 import { FilterX, Search, Users } from "lucide-react";
 
 import { ErrorAlert } from "@/components/feedback/ErrorAlert";
@@ -73,7 +73,9 @@ export function UsersAdmin() {
   }, [active, role, search]);
 
   useEffect(() => {
-    void load();
+    startTransition(async () => {
+      await load();
+    });
   }, [load]);
 
   function clearFilters() {

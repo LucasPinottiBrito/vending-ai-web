@@ -1,18 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useState, Suspense } from "react";
+import { startTransition, useCallback, useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { z } from "zod";
 import {
   AlertTriangle,
-  Boxes,
   Edit,
   Plus,
-  Search,
   FilterX,
-  History,
-  MoreVertical,
   Minus,
 } from "lucide-react";
 
@@ -25,11 +21,9 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -117,7 +111,9 @@ function InventoryAdminContent() {
   }, [machineId, lowStockOnly]);
 
   useEffect(() => {
-    load();
+    startTransition(async () => {
+      await load();
+    });
   }, [load]);
 
   async function handleCreate(values: InventoryValues) {

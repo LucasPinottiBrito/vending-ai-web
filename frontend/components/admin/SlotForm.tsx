@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -30,11 +30,11 @@ export function SlotForm({
     register,
     handleSubmit,
     setValue,
-    watch,
+    control,
     reset,
     formState: { errors },
   } = useForm<SlotInput, unknown, SlotValues>({
-    resolver: zodResolver(slotSchema) as any,
+    resolver: zodResolver(slotSchema),
     defaultValues: {
       code: "",
       motor_id: 0,
@@ -44,7 +44,7 @@ export function SlotForm({
     },
   });
 
-  const isEnabledValue = watch("is_enabled");
+  const isEnabledValue = useWatch({ control, name: "is_enabled" });
 
   useEffect(() => {
     if (initialValues) {

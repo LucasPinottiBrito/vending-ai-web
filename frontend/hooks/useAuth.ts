@@ -1,75 +1,52 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useSyncExternalStore } from "react";
 
 import {
-  AUTH_CHANGED_EVENT,
-  AUTH_STORAGE_KEY,
-  AuthSession,
-  AuthUser,
-  getStoredSession,
+  getSessionSnapshot,
   isAdmin,
   logoutSession,
+  parseSession,
   refreshCurrentUser,
+  subscribeToSession,
 } from "@/lib/auth";
 
+function getServerSnapshot(): undefined {
+  return undefined;
+}
+
 export function useAuth() {
-  const [session, setSession] = useState<AuthSession | null>(() =>
-    getStoredSession(),
+  // The server and first hydration render agree before reading browser storage.
+  const snapshot = useSyncExternalStore(
+    subscribeToSession,
+    getSessionSnapshot,
+    getServerSnapshot,
   );
-  const [isLoading, setIsLoading] = useState(false);
+  const session = useMemo(() => parseSession(snapshot), [snapshot]);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const reload = useCallback(async () => {
-    setIsLoading(true);
+    setIsRefreshing(true);
 
     try {
-      const refreshed = await refreshCurrentUser();
-      setSession(refreshed);
-    } catch {
-      setSession(getStoredSession());
+      await refreshCurrentUser();
     } finally {
-      setIsLoading(false);
+      setIsRefreshing(false);
     }
   }, []);
 
   const logout = useCallback(async () => {
     await logoutSession();
-    setSession(null);
   }, []);
 
-  useEffect(() => {
-    function syncSession(event?: Event) {
-      if (
-        event instanceof StorageEvent &&
-        event.key !== AUTH_STORAGE_KEY
-      ) {
-        return;
-      }
-
-      setSession(getStoredSession());
-    }
-
-    window.addEventListener(AUTH_CHANGED_EVENT, syncSession);
-    window.addEventListener("storage", syncSession);
-
-    return () => {
-      window.removeEventListener(AUTH_CHANGED_EVENT, syncSession);
-      window.removeEventListener("storage", syncSession);
-    };
-  }, []);
-
-  return useMemo(
-    () => ({
+  return {
       session,
       user: session?.user ?? null,
       token: session?.token ?? null,
       isAuthenticated: Boolean(session?.token),
-      isAdmin: isAdmin(session?.user as AuthUser | null),
-      isLoading,
+      isAdmin: isAdmin(session?.user),
+      isLoading: snapshot === undefined || isRefreshing,
       reload,
       logout,
-      setSession,
-    }),
-    [isLoading, logout, reload, session],
-  );
+  };
 }

@@ -26,29 +26,45 @@ function notifyAuthChanged(): void {
   }
 }
 
-export function getStoredSession(): AuthSession | null {
+// A primitive snapshot stays referentially stable between storage changes.
+export function getSessionSnapshot(): string | null {
   if (typeof window === "undefined") {
     return null;
   }
-
   try {
-    const raw = window.localStorage.getItem(AUTH_STORAGE_KEY);
-    if (!raw) {
-      return null;
-    }
-
-    const parsed = JSON.parse(raw) as Partial<AuthSession>;
-
-    if (!parsed.token || !parsed.user?.id || !parsed.user.email) {
-      window.localStorage.removeItem(AUTH_STORAGE_KEY);
-      return null;
-    }
-
-    return parsed as AuthSession;
+    return window.localStorage.getItem(AUTH_STORAGE_KEY);
   } catch {
-    window.localStorage.removeItem(AUTH_STORAGE_KEY);
     return null;
   }
+}
+
+export function parseSession(raw: string | null | undefined): AuthSession | null {
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw) as Partial<AuthSession>;
+    if (!parsed.token || !parsed.user?.id || !parsed.user.email) {
+      return null;
+    }
+    return parsed as AuthSession;
+  } catch {
+    return null;
+  }
+}
+
+export function getStoredSession(): AuthSession | null {
+  return parseSession(getSessionSnapshot());
+}
+
+export function subscribeToSession(onChange: () => void): () => void {
+  function onStorage(event: StorageEvent) {
+    if (event.key === null || event.key === AUTH_STORAGE_KEY) onChange();
+  }
+  window.addEventListener(AUTH_CHANGED_EVENT, onChange);
+  window.addEventListener("storage", onStorage);
+  return () => {
+    window.removeEventListener(AUTH_CHANGED_EVENT, onChange);
+    window.removeEventListener("storage", onStorage);
+  };
 }
 
 export function setStoredSession(session: AuthSession): void {
